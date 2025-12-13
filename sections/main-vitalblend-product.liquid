@@ -1,0 +1,508 @@
+{% comment %}
+  SECCIÓN: MAIN VITALBLEND PRODUCT
+  Versión Final + Suscripciones (Mock Logic)
+{% endcomment %}
+
+<div class="vitalblend-wrapper">
+  <div class="vb-gallery">
+    <img id="ProductImage" src="{{ product.featured_image | image_url: width: 800 }}" alt="{{ product.title }}">
+  </div>
+
+  <div class="vb-info">
+    <div class="vb-reviews">
+      <span style="color: #FFB800;">★★★★★</span>
+      <span style="font-size: 0.9rem; color: #666; margin-left: 5px;">(1,240 Reviews)</span>
+    </div>
+
+    <h1 class="vb-title">{{ product.title }}</h1>
+
+    {% if product.metafields.custom.promotional_headline != blank %}
+      <p class="vb-headline">{{ product.metafields.custom.promotional_headline }}</p>
+    {% endif %}
+
+    <div class="vb-price-container">
+      <span id="ProductPrice" class="vb-price">{{ product.price | money }}</span>
+      <span
+        id="ComparePrice"
+        class="vb-compare-price"
+        style="display:none; text-decoration: line-through; color: #999; margin-left: 10px;"
+      ></span>
+      <span
+        id="SaveBadge"
+        class="vb-save-badge"
+        style="display:none; background: #dff0d8; color: #3c763d; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-left: 10px;"
+        >Save 10%</span
+      >
+    </div>
+
+    {% form 'product', product %}
+      <input
+        type="hidden"
+        name="id"
+        id="SelectedVariantId"
+        value="{{ product.selected_or_first_available_variant.id }}"
+      >
+
+      <div class="vb-options">
+        {% for option in product.options_with_values %}
+          <fieldset class="vb-option-group">
+            <legend class="vb-option-label">
+              Select {{ option.name }}: <span id="Label-{{ option.name }}">{{ option.selected_value }}</span>
+            </legend>
+            <div class="vb-pills">
+              {% for value in option.values %}
+                <label class="vb-pill">
+                  <input
+                    type="radio"
+                    name="{{ option.name }}"
+                    value="{{ value }}"
+                    {% if option.selected_value == value %}
+                      checked
+                    {% endif %}
+                    onchange="updateVariantState(this)"
+                  >
+                  <span>{{ value }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+        {% endfor %}
+      </div>
+
+      <div class="vb-purchase-type-container">
+        <label class="vb-purchase-option active" id="OptionOneTime" onclick="setPurchaseType('onetime')">
+          <input type="radio" name="purchase_mode" value="onetime" checked style="display:none;">
+          <div class="vb-radio-circle"></div>
+          <div class="vb-option-text">
+            <strong>One-time purchase</strong>
+            <span class="vb-option-price-display" data-type="original">Original Price</span>
+          </div>
+        </label>
+
+        <label class="vb-purchase-option" id="OptionSub" onclick="setPurchaseType('subscription')">
+          <input type="radio" name="purchase_mode" value="subscription" style="display:none;">
+          <div class="vb-radio-circle"></div>
+          <div class="vb-option-text">
+            <strong>
+              {{ section.settings.sub_text }}
+              {{ section.settings.sub_discount_badge }}
+            </strong>
+            <span class="vb-option-price-display" data-type="discounted" style="color: #FF4D4D;">Best Value</span>
+          </div>
+        </label>
+
+        <div id="SubscriptionFrequency" class="vb-frequency-selector" style="display:none;">
+          <label>Deliver every:</label>
+          <select name="properties[Shipping Frequency]" class="vb-select">
+            <option value="15 Days">15 Days (Most Popular)</option>
+            <option value="30 Days">30 Days</option>
+            <option value="45 Days">45 Days</option>
+          </select>
+          <p class="vb-sub-benefits">✔ Free shipping ✔ Cancel anytime</p>
+        </div>
+      </div>
+
+      <div class="vb-actions">
+        <div class="vb-quantity">
+          <input type="number" name="quantity" value="1" min="1">
+        </div>
+        <button type="submit" name="add" id="AddToCart" class="vb-btn-add">Add to Cart</button>
+      </div>
+
+      <script type="application/json" id="ProductVariantsJson">
+        {{ product.variants | json }}
+      </script>
+    {% endform %}
+
+    <div class="vb-description">{{ product.description }}</div>
+
+    {% if product.metafields.custom.how_to_use_steps.value != blank %}
+      <div class="vb-how-to-use">
+        <h3>How to Use</h3>
+        <div class="vb-steps-grid">
+          {% for step in product.metafields.custom.how_to_use_steps.value %}
+            <div class="vb-step-card">
+              {% if step.icon != blank %}
+                <img src="{{ step.icon | image_url: width: 50 }}" alt="{{ step.title }}" class="vb-step-icon">
+              {% else %}
+                <div class="vb-step-icon-placeholder">✨</div>
+              {% endif %}
+              <div class="vb-step-text">
+                <strong>{{ step.title }}</strong>
+                <p>{{ step.description }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% style %}
+  /* Estilos Base */
+  .vitalblend-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 4rem auto;
+    padding: 0 20px;
+    font-family: 'Helvetica Neue', sans-serif;
+  }
+  .vb-gallery img {
+    width: 100%;
+    border-radius: 20px;
+    background: #f9f9f9;
+  }
+  .vb-title {
+    font-size: 2.5rem;
+    margin: 0.5rem 0;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+  .vb-headline {
+    font-size: 1.1rem;
+    color: #ff4d4d;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+  .vb-price {
+    font-size: 1.5rem;
+    color: #333;
+    font-weight: 500;
+  }
+  .vb-option-group {
+    border: none;
+    padding: 0;
+    margin: 1.5rem 0;
+  }
+  .vb-option-label {
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Botones Variantes */
+  .vb-pills {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .vb-pill input {
+    display: none;
+  }
+  .vb-pill span {
+    padding: 10px 20px;
+    border: 1px solid #ddd;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: block;
+    font-size: 0.9rem;
+  }
+  .vb-pill input:checked + span {
+    border-color: #000;
+    background-color: #000;
+    color: #fff;
+  }
+
+  /* ESTILOS DE SUSCRIPCIÓN (NUEVO) */
+  .vb-purchase-type-container {
+    margin: 2rem 0;
+    border: 1px solid #e1e1e1;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .vb-purchase-option {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #e1e1e1;
+    transition: background 0.2s;
+  }
+  .vb-purchase-option:last-of-type {
+    border-bottom: none;
+  }
+  .vb-purchase-option.active {
+    background: #f0f8ff;
+    border-left: 4px solid #000;
+  }
+  .vb-purchase-option:hover {
+    background: #f9f9f9;
+  }
+
+  .vb-radio-circle {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    margin-right: 15px;
+    position: relative;
+  }
+  .vb-purchase-option.active .vb-radio-circle {
+    border-color: #000;
+  }
+  .vb-purchase-option.active .vb-radio-circle::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #000;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+  }
+
+  .vb-option-text {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .vb-option-price-display {
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .vb-frequency-selector {
+    background: #f0f8ff;
+    padding: 15px;
+    border-top: 1px solid #e1e1e1;
+    animation: fadeIn 0.3s ease;
+  }
+  .vb-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+  .vb-sub-benefits {
+    font-size: 0.85rem;
+    color: #555;
+    margin: 0;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .vb-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 2rem;
+  }
+  .vb-quantity input {
+    padding: 15px;
+    width: 60px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+  .vb-btn-add {
+    flex: 1;
+    background: {{section.settings.btn_color}};
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  .vb-btn-add:hover {
+    background: #e04343;
+  }
+  .vb-description {
+    margin-top: 2rem;
+    line-height: 1.6;
+    color: #555;
+  }
+
+  /* How to use */
+  .vb-how-to-use {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+  }
+  .vb-how-to-use h3 {
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+  }
+  .vb-steps-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .vb-step-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #fdfdfd;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #f0f0f0;
+  }
+  .vb-step-icon-placeholder {
+    width: 40px;
+    height: 40px;
+    background: {{section.settings.btn_color}};
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+  .vb-step-text strong {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+  }
+  .vb-step-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  @media (max-width: 768px) {
+    .vitalblend-wrapper {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+{% endstyle %}
+
+<script>
+  const productVariants = JSON.parse(document.getElementById('ProductVariantsJson').textContent);
+  
+  let currentVariantPrice = {{ product.price }};
+  let isSubscription = false;
+
+  // 1. LÓGICA DE VARIANTES (Ya la conoces)
+  function updateVariantState(input) {
+    const labelSpan = document.getElementById(`Label-${input.name}`);
+    if(labelSpan) labelSpan.textContent = input.value;
+    
+    const selectedValues = Array.from(document.querySelectorAll('.vb-pill input:checked')).map(el => el.value);
+    const matchedVariant = productVariants.find(variant => selectedValues.every(val => variant.options.includes(val)));
+    
+    if (matchedVariant) {
+      document.getElementById('SelectedVariantId').value = matchedVariant.id;
+      currentVariantPrice = matchedVariant.price;
+      
+      // Actualizamos la URL
+      window.history.replaceState({}, '', `?variant=${matchedVariant.id}&view=vitalblend`);
+
+      // Refrescamos el precio mostrado
+      updatePriceDisplay();
+    }
+  }
+
+  // 2. LÓGICA DE SUSCRIPCIÓN (NUEVA)
+  function setPurchaseType(type) {
+    const containerFreq = document.getElementById('SubscriptionFrequency');
+    const optionOne = document.getElementById('OptionOneTime');
+    const optionSub = document.getElementById('OptionSub');
+    const selectFreq = containerFreq.querySelector('select');
+    
+    // Reseteamos estilos
+    optionOne.classList.remove('active');
+    optionSub.classList.remove('active');
+
+    if (type === 'subscription') {
+      isSubscription = true;
+      optionSub.classList.add('active');
+      containerFreq.style.display = 'block';
+      
+      // Habilitar envío de propiedad al carrito
+      selectFreq.disabled = false; 
+
+    } else {
+      isSubscription = false;
+      optionOne.classList.add('active');
+      containerFreq.style.display = 'none';
+      
+      // Deshabilitar envío para no confundir al carrito
+      selectFreq.disabled = true;
+    }
+
+    updatePriceDisplay();
+  }
+
+  // 3. ACTUALIZAR PRECIO EN PANTALLA
+  function updatePriceDisplay() {
+    const priceEl = document.getElementById('ProductPrice');
+    const compareEl = document.getElementById('ComparePrice');
+    const badgeEl = document.getElementById('SaveBadge');
+    
+    let finalPrice = currentVariantPrice;
+
+    if (isSubscription) {
+      // Calculamos 10% descuento
+      finalPrice = currentVariantPrice * 0.9;
+      
+      compareEl.innerText = formatMoney(currentVariantPrice);
+      compareEl.style.display = 'inline';
+      badgeEl.style.display = 'inline-block';
+    } else {
+      compareEl.style.display = 'none';
+      badgeEl.style.display = 'none';
+    }
+
+    priceEl.innerText = formatMoney(finalPrice);
+  }
+
+  function formatMoney(cents) { 
+    return '$' + (cents / 100).toFixed(2); 
+  }
+</script>
+
+{% schema %}
+{
+  "name": "VitalBlend Product",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Subscription Settings"
+    },
+    {
+      "type": "text",
+      "id": "sub_text",
+      "label": "Subscription Label",
+      "default": "Subscribe & Save"
+    },
+    {
+      "type": "text",
+      "id": "sub_discount_badge",
+      "label": "Discount Badge Text",
+      "default": "Save 10%"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "btn_color",
+      "label": "Add to Cart Button Color",
+      "default": "#FF4D4D"
+    }
+  ]
+}
+{% endschema %}

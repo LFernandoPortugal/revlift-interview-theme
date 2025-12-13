@@ -1,0 +1,19 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-vitalblend-product",
+      "settings": {}
+    },
+    "recommendations": {
+      "type": "vitalblend-recommendations",
+      "settings": {
+        "heading": "Boost Your Routine",
+        "collection_source": "all" 
+      }
+    }
+  },
+  "order": [
+    "main",
+    "recommendations"
+  ]
+}
