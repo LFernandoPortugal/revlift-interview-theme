@@ -389,39 +389,64 @@
 {% endstyle %}
 
 <script>
+  // Parseamos los datos de las variantes desde Liquid
   const productVariants = JSON.parse(document.getElementById('ProductVariantsJson').textContent);
+  
+  // Guardamos el producto base para saber la imagen por defecto
+  const productImageEl = document.getElementById('ProductImage');
   
   let currentVariantPrice = {{ product.price }};
   let isSubscription = false;
 
-  // 1. LÓGICA DE VARIANTES (Ya la conoces)
+  // --- 1. LÓGICA DE VARIANTES E IMÁGENES ---
   function updateVariantState(input) {
+    // 1.1 Actualizar el texto de la etiqueta (ej: Select Flavor: Berry Blast)
     const labelSpan = document.getElementById(`Label-${input.name}`);
     if(labelSpan) labelSpan.textContent = input.value;
     
+    // 1.2 Encontrar qué variante coincide con TODOS los botones seleccionados
+    // Buscamos todos los inputs "checked" dentro de .vb-pill
     const selectedValues = Array.from(document.querySelectorAll('.vb-pill input:checked')).map(el => el.value);
-    const matchedVariant = productVariants.find(variant => selectedValues.every(val => variant.options.includes(val)));
+    
+    const matchedVariant = productVariants.find(variant => {
+      // Verificamos si la variante tiene todas las opciones seleccionadas
+      return selectedValues.every(val => variant.options.includes(val));
+    });
     
     if (matchedVariant) {
+      // A. Actualizar ID oculto (para el carrito)
       document.getElementById('SelectedVariantId').value = matchedVariant.id;
+      
+      // B. Actualizar Precio base
       currentVariantPrice = matchedVariant.price;
       
-      // Actualizamos la URL
-      window.history.replaceState({}, '', `?variant=${matchedVariant.id}&view=vitalblend`);
+      // C. Actualizar URL (sin recargar)
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.set('variant', matchedVariant.id);
+      window.history.replaceState({}, '', newUrl);
 
-      // Refrescamos el precio mostrado
+      // D. CAMBIO DE IMAGEN (NUEVO)
+      if (matchedVariant.featured_image && matchedVariant.featured_image.src) {
+        // Shopify a veces entrega http, forzamos https
+        let newImageSrc = matchedVariant.featured_image.src;
+        if (newImageSrc.startsWith('http:')) newImageSrc = newImageSrc.replace('http:', 'https:');
+        
+        productImageEl.src = newImageSrc;
+      }
+
+      // E. Refrescar precios en pantalla (por si hay suscripción activa)
       updatePriceDisplay();
     }
   }
 
-  // 2. LÓGICA DE SUSCRIPCIÓN (NUEVA)
+  // --- 2. LÓGICA DE SUSCRIPCIÓN ---
   function setPurchaseType(type) {
     const containerFreq = document.getElementById('SubscriptionFrequency');
     const optionOne = document.getElementById('OptionOneTime');
     const optionSub = document.getElementById('OptionSub');
     const selectFreq = containerFreq.querySelector('select');
     
-    // Reseteamos estilos
+    // Reset visual
     optionOne.classList.remove('active');
     optionSub.classList.remove('active');
 
@@ -429,23 +454,17 @@
       isSubscription = true;
       optionSub.classList.add('active');
       containerFreq.style.display = 'block';
-      
-      // Habilitar envío de propiedad al carrito
       selectFreq.disabled = false; 
-
     } else {
       isSubscription = false;
       optionOne.classList.add('active');
       containerFreq.style.display = 'none';
-      
-      // Deshabilitar envío para no confundir al carrito
       selectFreq.disabled = true;
     }
-
     updatePriceDisplay();
   }
 
-  // 3. ACTUALIZAR PRECIO EN PANTALLA
+  // --- 3. ACTUALIZAR PRECIO VISUAL ---
   function updatePriceDisplay() {
     const priceEl = document.getElementById('ProductPrice');
     const compareEl = document.getElementById('ComparePrice');
@@ -454,9 +473,7 @@
     let finalPrice = currentVariantPrice;
 
     if (isSubscription) {
-      // Calculamos 10% descuento
-      finalPrice = currentVariantPrice * 0.9;
-      
+      finalPrice = currentVariantPrice * 0.9; // 10% descuento
       compareEl.innerText = formatMoney(currentVariantPrice);
       compareEl.style.display = 'inline';
       badgeEl.style.display = 'inline-block';
@@ -464,10 +481,10 @@
       compareEl.style.display = 'none';
       badgeEl.style.display = 'none';
     }
-
     priceEl.innerText = formatMoney(finalPrice);
   }
 
+  // Helper para formatear dinero (simple)
   function formatMoney(cents) { 
     return '$' + (cents / 100).toFixed(2); 
   }
