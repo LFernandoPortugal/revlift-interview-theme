@@ -1,38 +1,54 @@
 {% comment %}
-  SECCIÓN: MAIN VITALBLEND PRODUCT
-  Versión Final + Suscripciones (Mock Logic)
+  SECTION: MAIN VITALBLEND PRODUCT
+  Version: Final Release (Pupford Style Layout with Media Gallery)
+  Author: Luis Portugal
 {% endcomment %}
 
 <div class="vitalblend-wrapper">
   <div class="vb-gallery">
-    <img id="ProductImage" src="{{ product.featured_image | image_url: width: 800 }}" alt="{{ product.title }}">
+    <div class="vb-main-image-container">
+      <img
+        id="ProductImage"
+        src="{{ product.featured_image | image_url: width: 1000, height: 1000 }}"
+        width="1000"
+        height="1000"
+        alt="{{ product.title | escape }}"
+        data-media-id="{{ product.featured_image.id }}"
+      >
+    </div>
+
+    {% if product.media.size > 1 %}
+      <div class="vb-thumbnails-grid">
+        {% for media in product.media %}
+          <button
+            class="vb-thumb-btn {% if media.id == product.featured_image.id %}active{% endif %}"
+            data-media-id="{{ media.id }}"
+            onclick="changeMainImage('{{ media.preview_image | image_url: width: 1000, height: 1000 }}', this)"
+          >
+            <img
+              src="{{ media.preview_image | image_url: width: 150, height: 150 }}"
+              width="150"
+              height="150"
+              alt="{{ media.alt | escape }}"
+            >
+          </button>
+        {% endfor %}
+      </div>
+    {% endif %}
   </div>
 
   <div class="vb-info">
     <div class="vb-reviews">
-      <span style="color: #FFB800;">★★★★★</span>
-      <span style="font-size: 0.9rem; color: #666; margin-left: 5px;">(1,240 Reviews)</span>
+      <span style="color: #FFB800; letter-spacing: 2px;">★★★★★</span>
+      <span class="vb-review-count">1,240 Reviews</span>
     </div>
 
     <h1 class="vb-title">{{ product.title }}</h1>
 
-    {% if product.metafields.custom.promotional_headline != blank %}
-      <p class="vb-headline">{{ product.metafields.custom.promotional_headline }}</p>
-    {% endif %}
-
     <div class="vb-price-container">
       <span id="ProductPrice" class="vb-price">{{ product.price | money }}</span>
-      <span
-        id="ComparePrice"
-        class="vb-compare-price"
-        style="display:none; text-decoration: line-through; color: #999; margin-left: 10px;"
-      ></span>
-      <span
-        id="SaveBadge"
-        class="vb-save-badge"
-        style="display:none; background: #dff0d8; color: #3c763d; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-left: 10px;"
-        >Save 10%</span
-      >
+      <span id="ComparePrice" class="vb-compare-price" style="display:none;"></span>
+      <span id="SaveBadge" class="vb-save-badge" style="display:none;">{{ section.settings.sub_discount_badge }}</span>
     </div>
 
     {% form 'product', product %}
@@ -47,7 +63,7 @@
         {% for option in product.options_with_values %}
           <fieldset class="vb-option-group">
             <legend class="vb-option-label">
-              Select {{ option.name }}: <span id="Label-{{ option.name }}">{{ option.selected_value }}</span>
+              {{ option.name }}: <span id="Label-{{ option.name }}">{{ option.selected_value }}</span>
             </legend>
             <div class="vb-pills">
               {% for value in option.values %}
@@ -55,7 +71,7 @@
                   <input
                     type="radio"
                     name="{{ option.name }}"
-                    value="{{ value }}"
+                    value="{{ value | escape }}"
                     {% if option.selected_value == value %}
                       checked
                     {% endif %}
@@ -75,7 +91,6 @@
           <div class="vb-radio-circle"></div>
           <div class="vb-option-text">
             <strong>One-time purchase</strong>
-            <span class="vb-option-price-display" data-type="original">Original Price</span>
           </div>
         </label>
 
@@ -83,370 +98,344 @@
           <input type="radio" name="purchase_mode" value="subscription" style="display:none;">
           <div class="vb-radio-circle"></div>
           <div class="vb-option-text">
-            <strong>
-              {{ section.settings.sub_text }}
-              {{ section.settings.sub_discount_badge }}
-            </strong>
-            <span class="vb-option-price-display" data-type="discounted" style="color: #FF4D4D;">Best Value</span>
+            <strong>{{ section.settings.sub_text }}</strong>
+            <span class="vb-option-price-display" style="color: #E53935; font-weight:bold;">Best Value</span>
           </div>
         </label>
 
         <div id="SubscriptionFrequency" class="vb-frequency-selector" style="display:none;">
           <label>Deliver every:</label>
-          <select name="properties[Shipping Frequency]" class="vb-select">
-            <option value="15 Days">15 Days (Most Popular)</option>
-            <option value="30 Days">30 Days</option>
+          <select name="properties[Shipping Frequency]" class="vb-select" disabled>
+            <option value="30 Days">30 Days (Most Popular)</option>
             <option value="45 Days">45 Days</option>
+            <option value="60 Days">60 Days</option>
           </select>
-          <p class="vb-sub-benefits">✔ Free shipping ✔ Cancel anytime</p>
         </div>
       </div>
 
       <div class="vb-actions">
         <div class="vb-quantity">
-          <input type="number" name="quantity" value="1" min="1">
+          <input type="number" name="quantity" value="1" min="1" aria-label="Quantity">
         </div>
         <button type="submit" name="add" id="AddToCart" class="vb-btn-add">Add to Cart</button>
       </div>
+
+      <div class="vb-description">{{ product.description }}</div>
 
       <script type="application/json" id="ProductVariantsJson">
         {{ product.variants | json }}
       </script>
     {% endform %}
-
-    <div class="vb-description">{{ product.description }}</div>
-
-    {% if product.metafields.custom.how_to_use_steps.value != blank %}
-      <div class="vb-how-to-use">
-        <h3>How to Use</h3>
-        <div class="vb-steps-grid">
-          {% for step in product.metafields.custom.how_to_use_steps.value %}
-            <div class="vb-step-card">
-              {% if step.icon != blank %}
-                <img src="{{ step.icon | image_url: width: 50 }}" alt="{{ step.title }}" class="vb-step-icon">
-              {% else %}
-                <div class="vb-step-icon-placeholder">✨</div>
-              {% endif %}
-              <div class="vb-step-text">
-                <strong>{{ step.title }}</strong>
-                <p>{{ step.description }}</p>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-    {% endif %}
   </div>
 </div>
 
+<div class="vb-sections-container">
+  {% if product.metafields.custom.promotional_headline != blank %}
+    <div class="vb-section-block vb-headline-block">
+      <h2>{{ product.metafields.custom.promotional_headline | escape }}</h2>
+    </div>
+  {% endif %}
+
+  <div class="vb-section-block vb-icons-block">
+    <div class="vb-icons-grid">
+      <div class="vb-icon-item">
+        <span class="vb-icon-emoji" role="img" aria-label="seedling">🌱</span>
+        <span>Simple Ingredients</span>
+      </div>
+      <div class="vb-icon-item">
+        <span class="vb-icon-emoji" role="img" aria-label="flag">🇺🇸</span>
+        <span>Made in USA</span>
+      </div>
+      <div class="vb-icon-item">
+        <span class="vb-icon-emoji" role="img" aria-label="down arrow">⬇️</span>
+        <span>Low Calorie</span>
+      </div>
+      <div class="vb-icon-item">
+        <span class="vb-icon-emoji" role="img" aria-label="prohibited">🚫</span>
+        <span>No Fillers</span>
+      </div>
+    </div>
+  </div>
+
+  {% if product.metafields.custom.how_to_use_steps.value != blank %}
+    <div class="vb-section-block vb-how-to-use-block">
+      <h3>How to Use</h3>
+      <div class="vb-steps-grid">
+        {% for step in product.metafields.custom.how_to_use_steps.value %}
+          <div class="vb-step-card">
+            <div class="vb-step-icon-placeholder">
+              {% if step.icon != blank %}
+                <img
+                  src="{{ step.icon | image_url: width: 80, height: 80 }}"
+                  width="80"
+                  height="80"
+                  alt="{{ step.title | escape }}"
+                >
+              {% else %}
+                <span>✓</span>
+              {% endif %}
+            </div>
+            <div class="vb-step-text">
+              <strong>{{ step.title | escape }}</strong>
+              <p>{{ step.description | escape }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
 {% style %}
-  /* Estilos Base */
+  /* --- MAIN LAYOUT --- */
   .vitalblend-wrapper {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr; /* Split 50/50 */
     gap: 4rem;
     max-width: 1200px;
-    margin: 4rem auto;
+    margin: 3rem auto;
     padding: 0 20px;
-    font-family: 'Helvetica Neue', sans-serif;
-  }
-  .vb-gallery img {
-    width: 100%;
-    border-radius: 20px;
-    background: #f9f9f9;
-  }
-  .vb-title {
-    font-size: 2.5rem;
-    margin: 0.5rem 0;
-    letter-spacing: -1px;
-    line-height: 1.1;
-  }
-  .vb-headline {
-    font-size: 1.1rem;
-    color: #ff4d4d;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
-  }
-  .vb-price {
-    font-size: 1.5rem;
-    color: #333;
-    font-weight: 500;
-  }
-  .vb-option-group {
-    border: none;
-    padding: 0;
-    margin: 1.5rem 0;
-  }
-  .vb-option-label {
-    font-weight: bold;
-    margin-bottom: 10px;
-    display: block;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #222;
+    align-items: start;
   }
 
-  /* Botones Variantes */
-  .vb-pills {
+  /* --- MEDIA GALLERY STYLES --- */
+  .vb-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .vb-main-image-container img {
+    width: 100%;
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 20px;
+    background: #f4f4f4;
+    object-fit: cover;
+  }
+  .vb-thumbnails-grid {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
   }
-  .vb-pill input {
-    display: none;
-  }
-  .vb-pill span {
-    padding: 10px 20px;
-    border: 1px solid #ddd;
-    border-radius: 50px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-    display: block;
-    font-size: 0.9rem;
-  }
-  .vb-pill input:checked + span {
-    border-color: #000;
-    background-color: #000;
-    color: #fff;
-  }
-
-  /* ESTILOS DE SUSCRIPCIÓN (NUEVO) */
-  .vb-purchase-type-container {
-    margin: 2rem 0;
-    border: 1px solid #e1e1e1;
+  .vb-thumb-btn {
+    width: 80px;
+    height: 80px;
+    padding: 0;
+    border: 2px solid transparent;
     border-radius: 12px;
     overflow: hidden;
-  }
-  .vb-purchase-option {
-    display: flex;
-    align-items: center;
-    padding: 15px;
     cursor: pointer;
-    border-bottom: 1px solid #e1e1e1;
-    transition: background 0.2s;
+    background: #f4f4f4;
+    transition: all 0.2s ease;
   }
-  .vb-purchase-option:last-of-type {
-    border-bottom: none;
-  }
-  .vb-purchase-option.active {
-    background: #f0f8ff;
-    border-left: 4px solid #000;
-  }
-  .vb-purchase-option:hover {
-    background: #f9f9f9;
-  }
-
-  .vb-radio-circle {
-    width: 18px;
-    height: 18px;
-    border: 2px solid #ccc;
-    border-radius: 50%;
-    margin-right: 15px;
-    position: relative;
-  }
-  .vb-purchase-option.active .vb-radio-circle {
-    border-color: #000;
-  }
-  .vb-purchase-option.active .vb-radio-circle::after {
-    content: '';
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background: #000;
-    border-radius: 50%;
-    top: 2px;
-    left: 2px;
-  }
-
-  .vb-option-text {
-    flex: 1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .vb-option-price-display {
-    font-size: 0.9rem;
-    color: #666;
-  }
-
-  .vb-frequency-selector {
-    background: #f0f8ff;
-    padding: 15px;
-    border-top: 1px solid #e1e1e1;
-    animation: fadeIn 0.3s ease;
-  }
-  .vb-select {
+  .vb-thumb-btn img {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin-bottom: 10px;
+    height: 100%;
+    object-fit: cover;
   }
-  .vb-sub-benefits {
-    font-size: 0.85rem;
-    color: #555;
-    margin: 0;
+  /* Active state for selected thumbnail */
+  .vb-thumb-btn.active {
+    border-color: #000;
+    opacity: 0.7;
   }
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-5px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  /* --- TYPOGRAPHY & PRICING --- */
+  .vb-title { font-size: 3rem; margin: 10px 0 20px; line-height: 1; letter-spacing: -1px; }
 
-  .vb-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 2rem;
-  }
-  .vb-quantity input {
-    padding: 15px;
-    width: 60px;
-    text-align: center;
+  .vb-reviews { font-size: 1.1rem; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .vb-review-count { text-decoration: underline; color: #666; font-size: 0.9rem;}
+
+  .vb-price { font-size: 2.5rem; font-weight: 700; color: #000; }
+  .vb-price-container { margin-bottom: 2rem; display: flex; align-items: center; gap: 15px; }
+  .vb-save-badge { background: #E53935; color: white; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; border-radius: 4px;}
+  .vb-compare-price { font-size: 1.5rem; color: #888; text-decoration: line-through; }
+
+  /* --- VARIANT SELECTORS (Pills) --- */
+  .vb-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;}
+  /* Hides the native radio button circle */
+  .vb-pill input { display: none; }
+  .vb-pill span {
+    display: block;
+    padding: 12px 25px;
     border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-  }
-  .vb-btn-add {
-    flex: 1;
-    background: {{section.settings.btn_color}};
-    color: white;
-    border: none;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: bold;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.3s;
+    font-size: 1rem;
+    transition: all 0.2s;
   }
-  .vb-btn-add:hover {
-    background: #e04343;
-  }
-  .vb-description {
-    margin-top: 2rem;
-    line-height: 1.6;
-    color: #555;
+  .vb-pill input:checked + span { border-color: #000; background: #000; color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+  .vb-option-label { font-weight: bold; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+  .vb-option-group { margin-bottom: 1.5rem; border: none; padding: 0; }
+
+  /* --- SUBSCRIPTION WIDGET --- */
+  .vb-purchase-type-container { margin: 2rem 0; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
+  .vb-purchase-option { display: flex; align-items: center; padding: 20px; cursor: pointer; border-bottom: 1px solid #eee; background: #fff;}
+  .vb-purchase-option.active { background: #f9f9f9; border-left: 5px solid #000; }
+  .vb-purchase-option:last-of-type { border-bottom: none; }
+  /* Custom radio circle styling */
+  .vb-radio-circle { width: 22px; height: 22px; border: 2px solid #bbb; border-radius: 50%; margin-right: 15px; position: relative;}
+  .vb-purchase-option.active .vb-radio-circle { border-color: #000; }
+  .vb-purchase-option.active .vb-radio-circle::after { content:''; position: absolute; top:4px; left:4px; width:10px; height:10px; background:#000; border-radius:50%; }
+
+  .vb-frequency-selector { background: #f1f1f1; padding: 15px 20px; border-top: 1px solid #ddd;}
+  .vb-select { width: 100%; padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px;}
+
+  /* --- ACTIONS (Add to Cart) --- */
+  .vb-actions { display: flex; gap: 10px; height: 55px; margin-top: 2rem; }
+  .vb-quantity input { height: 100%; width: 70px; text-align: center; font-size: 1.2rem; border: 1px solid #ccc; border-radius: 6px; }
+  .vb-btn-add { flex: 1; background: {{ section.settings.btn_color }}; color: white; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; border-radius: 6px; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.2s;}
+  .vb-btn-add:hover { opacity: 0.9; }
+  .vb-description { margin-top: 2rem; line-height: 1.6; font-size: 1.1rem; color: #444; }
+
+  /* ========================================= */
+  /* LOWER FULL-WIDTH SECTIONS STYLES */
+  /* ========================================= */
+  .vb-sections-container {
+    max-width: 1000px;
+    margin: 5rem auto 8rem;
+    padding: 0 20px;
+    text-align: center;
   }
 
-  /* How to use */
-  .vb-how-to-use {
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 1px solid #eee;
+  .vb-section-block { margin-bottom: 6rem; }
+
+  /* Headline Section */
+  .vb-headline-block h2 {
+    font-size: 2.8rem;
+    line-height: 1.2;
+    color: #111;
+    font-weight: 800;
   }
-  .vb-how-to-use h3 {
-    margin-bottom: 1.5rem;
-    font-size: 1.2rem;
+
+  /* Icons Grid Section */
+  .vb-icons-grid {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    flex-wrap: wrap;
   }
-  .vb-steps-grid {
+  .vb-icon-item {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-  }
-  .vb-step-card {
-    display: flex;
     align-items: center;
     gap: 15px;
-    background: #fdfdfd;
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid #f0f0f0;
+    font-weight: bold;
+    font-size: 1.1rem;
   }
-  .vb-step-icon-placeholder {
-    width: 40px;
-    height: 40px;
-    background: {{section.settings.btn_color}};
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-  }
-  .vb-step-text strong {
-    display: block;
-    font-size: 0.95rem;
-    margin-bottom: 2px;
-  }
-  .vb-step-text p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #666;
-  }
+  .vb-icon-emoji { font-size: 3.5rem; }
 
-  @media (max-width: 768px) {
-    .vitalblend-wrapper {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
+  /* How to Use Section */
+  .vb-how-to-use-block h3 { font-size: 2.2rem; margin-bottom: 3rem; font-weight: 700;}
+  .vb-steps-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2.5rem; text-align: left; }
+  .vb-step-card {
+    background: #fff;
+    padding: 35px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* Enhanced shadow for depth */
+    border: 1px solid #f0f0f0;
+    transition: transform 0.3s ease;
+  }
+  .vb-step-card:hover { transform: translateY(-5px); }
+
+  /* Icon container - transparent background */
+  .vb-step-icon-placeholder {
+    width: 80px;
+    height: 80px;
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .vb-step-icon-placeholder img { width: 100%; height: 100%; object-fit: contain; }
+  .vb-step-text strong { display: block; font-size: 1.2rem; margin-bottom: 10px; }
+  .vb-step-text p { color: #666; line-height: 1.5; }
+
+
+  /* --- RESPONSIVE DESIGN --- */
+  @media (max-width: 900px) {
+    .vitalblend-wrapper { grid-template-columns: 1fr; gap: 3rem; }
+    .vb-title { font-size: 2.5rem; }
+    .vb-icons-grid { gap: 2rem; }
+    .vb-steps-grid { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto;}
+    .vb-step-card { display: flex; align-items: flex-start; gap: 20px; padding: 25px;}
+    .vb-step-icon-placeholder { margin-bottom: 0; width: 60px; height: 60px; flex-shrink: 0;}
   }
 {% endstyle %}
 
 <script>
-  // Parseamos los datos de las variantes desde Liquid
+  // Parse variant data stored in the Liquid script tag
   const productVariants = JSON.parse(document.getElementById('ProductVariantsJson').textContent);
+  const mainImageEl = document.getElementById('ProductImage');
   
-  // Guardamos el producto base para saber la imagen por defecto
-  const productImageEl = document.getElementById('ProductImage');
-  
+  // Initialize state
   let currentVariantPrice = {{ product.price }};
   let isSubscription = false;
 
-  // --- 1. LÓGICA DE VARIANTES E IMÁGENES ---
+  // --- NEW: FUNCTION TO HANDLE THUMBNAIL CLICKS ---
+  function changeMainImage(newSrc, clickedBtn) {
+    // 1. Update main image source
+    mainImageEl.src = newSrc;
+    
+    // 2. Update active state on thumbnails
+    document.querySelectorAll('.vb-thumb-btn').forEach(btn => btn.classList.remove('active'));
+    clickedBtn.classList.add('active');
+  }
+
+
+  // --- FUNCTION TO HANDLE VARIANT CHANGES ---
   function updateVariantState(input) {
-    // 1.1 Actualizar el texto de la etiqueta (ej: Select Flavor: Berry Blast)
+    // 1. Update visual label text
     const labelSpan = document.getElementById(`Label-${input.name}`);
     if(labelSpan) labelSpan.textContent = input.value;
     
-    // 1.2 Encontrar qué variante coincide con TODOS los botones seleccionados
-    // Buscamos todos los inputs "checked" dentro de .vb-pill
+    // 2. Find matching variant based on all selected radio inputs
     const selectedValues = Array.from(document.querySelectorAll('.vb-pill input:checked')).map(el => el.value);
-    
     const matchedVariant = productVariants.find(variant => {
-      // Verificamos si la variante tiene todas las opciones seleccionadas
       return selectedValues.every(val => variant.options.includes(val));
     });
     
     if (matchedVariant) {
-      // A. Actualizar ID oculto (para el carrito)
+      // A. Update hidden ID for form submission
       document.getElementById('SelectedVariantId').value = matchedVariant.id;
       
-      // B. Actualizar Precio base
+      // B. Update base price variable
       currentVariantPrice = matchedVariant.price;
       
-      // C. Actualizar URL (sin recargar)
+      // C. Update URL parameters silently
       const newUrl = new URL(window.location);
       newUrl.searchParams.set('variant', matchedVariant.id);
       window.history.replaceState({}, '', newUrl);
 
-      // D. CAMBIO DE IMAGEN (NUEVO)
+      // D. UPDATE IMAGE & THUMBNAILS (Enhanced Logic)
       if (matchedVariant.featured_image && matchedVariant.featured_image.src) {
-        // Shopify a veces entrega http, forzamos https
-        let newImageSrc = matchedVariant.featured_image.src;
-        if (newImageSrc.startsWith('http:')) newImageSrc = newImageSrc.replace('http:', 'https:');
-        
-        productImageEl.src = newImageSrc;
+         // Ensure HTTPS
+         let newImageSrc = matchedVariant.featured_image.src;
+         if (newImageSrc.startsWith('http:')) newImageSrc = newImageSrc.replace('http:', 'https:');
+         
+         // Update Main Image
+         mainImageEl.src = newImageSrc;
+
+         // Update Active Thumbnail Highlight
+         const matchingThumbBtn = document.querySelector(`.vb-thumb-btn[data-media-id="${matchedVariant.featured_image.id}"]`);
+         if (matchingThumbBtn) {
+            document.querySelectorAll('.vb-thumb-btn').forEach(btn => btn.classList.remove('active'));
+            matchingThumbBtn.classList.add('active');
+         }
       }
 
-      // E. Refrescar precios en pantalla (por si hay suscripción activa)
+      // E. Refresh displayed prices
       updatePriceDisplay();
     }
   }
 
-  // --- 2. LÓGICA DE SUSCRIPCIÓN ---
+  // --- FUNCTION TO HANDLE SUBSCRIPTION TOGGLE ---
   function setPurchaseType(type) {
     const containerFreq = document.getElementById('SubscriptionFrequency');
     const optionOne = document.getElementById('OptionOneTime');
     const optionSub = document.getElementById('OptionSub');
     const selectFreq = containerFreq.querySelector('select');
     
-    // Reset visual
+    // Reset UI state
     optionOne.classList.remove('active');
     optionSub.classList.remove('active');
 
@@ -454,17 +443,17 @@
       isSubscription = true;
       optionSub.classList.add('active');
       containerFreq.style.display = 'block';
-      selectFreq.disabled = false; 
+      selectFreq.disabled = false; // Enable select so data is sent
     } else {
       isSubscription = false;
       optionOne.classList.add('active');
       containerFreq.style.display = 'none';
-      selectFreq.disabled = true;
+      selectFreq.disabled = true; // Disable select so data is NOT sent
     }
     updatePriceDisplay();
   }
 
-  // --- 3. ACTUALIZAR PRECIO VISUAL ---
+  // --- FUNCTION TO UPDATE PRICE UI ---
   function updatePriceDisplay() {
     const priceEl = document.getElementById('ProductPrice');
     const compareEl = document.getElementById('ComparePrice');
@@ -473,7 +462,8 @@
     let finalPrice = currentVariantPrice;
 
     if (isSubscription) {
-      finalPrice = currentVariantPrice * 0.9; // 10% descuento
+      // Apply 10% discount simulation
+      finalPrice = currentVariantPrice * 0.9; 
       compareEl.innerText = formatMoney(currentVariantPrice);
       compareEl.style.display = 'inline';
       badgeEl.style.display = 'inline-block';
@@ -484,7 +474,7 @@
     priceEl.innerText = formatMoney(finalPrice);
   }
 
-  // Helper para formatear dinero (simple)
+  // Helper utility for currency formatting
   function formatMoney(cents) { 
     return '$' + (cents / 100).toFixed(2); 
   }
@@ -501,7 +491,7 @@
     {
       "type": "text",
       "id": "sub_text",
-      "label": "Subscription Label",
+      "label": "Subscription Option Label",
       "default": "Subscribe & Save"
     },
     {
@@ -512,13 +502,13 @@
     },
     {
       "type": "header",
-      "content": "Colors"
+      "content": "Theme Colors"
     },
     {
       "type": "color",
       "id": "btn_color",
       "label": "Add to Cart Button Color",
-      "default": "#FF4D4D"
+      "default": "#000000"
     }
   ]
 }
