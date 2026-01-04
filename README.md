@@ -1,34 +1,34 @@
-# VitalBlend - Shopify Developer Interview
+# Vitalblend Interview Theme - Shopify Developer Implementation
 
-This repository contains the custom theme code for the VitalBlend product page implementation.
+This repository contains the custom theme code for the **Vitalblend** product page, featuring high-fidelity UX and technical improvements as part of a Shopify developer interview.
 
 ## 🚀 How to Preview
-1. Access the development store here: **https://luis-portugal-dev.myshopify.com/**
-2. Navigate to the product **VitalBlend Superfood Mix**.
-3. **Note:** The `vitalblend` template has been assigned as the default for this product. However, you can also force the view using the query parameter:
-   - URL: `https://luis-portugal-dev.myshopify.com/products/vitalblend-superfood-mix?view=vitalblend`
+1. Access the development store: **https://luis-portugal-dev.myshopify.com/**
+2. Navigate to the product **Vitalblend Superfood Mix** (or your rebranded product).
+3. Use the custom template:
+   - Template: `product.vitalblend.json`
+   - URL parameter: `?view=vitalblend`
 
 ## 🛠 Features Implemented
-- **Custom Liquid Section:** `main-vitalblend-product.liquid` built from scratch (no reliance on default theme sections).
-- **Advanced Variant Logic:**
-  - Custom JavaScript to handle variant switching using "Pill" selectors.
-  - **Dynamic Image Switching:** Product image updates automatically based on the selected variant.
-  - URL parameter updates without page reload (`window.history.replaceState`).
-- **Subscription UI (Simulation):**
-  - Custom "Subscribe & Save" toggle widget.
-  - Dynamically updates the price display.
-  - Passes `Shipping Frequency` as a Line Item Property to the cart for backend processing.
-- **Metafields & Metaobjects:**
-  - `custom.promotional_headline` for the sub-header.
-  - `custom.how_to_use_steps` (Metaobject) for the instructional steps section.
-- **Cross-Sell Section:** Independent section (`vitalblend-recommendations`) driven by collection data.
+- **High-Fidelity Product Page:** `main-vitalblend-product.liquid`
+  - Vertical image gallery with zoom-on-hover.
+  - Custom pill-style variant selectors with icons (using the 🌿 icon for flavor).
+  - Native Shopify **Selling Plans** integration for real subscriptions.
+  - Custom rounded quantity selector (+/-).
+  - Dynamic price calculations (10% discount for subscriptions).
+- **Sticky Add to Cart Bar:** Appears automatically as you scroll down for better conversion.
+- **Metafield-Driven Sections:**
+  - Promotional headlines and instructional steps derived from product metafields/metaobjects.
+- **Cross-Sell Section:** `vitalblend-recommendations.liquid` with "Quick Add" AJAX functionality.
 
 ## ⚙️ Configuration
 - **Theme Editor:**
-  - Go to **VitalBlend Product** template.
-  - Customize texts, colors, and subscription labels via the Section Schema.
-  - "You May Also Like" section content is managed by selecting a Collection in the section settings.
+  - Assign the `vitalblend` template to your product.
+  - Customize context and sections via the Section Schema.
+- **Data Source:**
+  - Content for icons and "How to Use" steps is managed via Product Metafields.
 
 ## 📝 Technical Notes
-- **Subscription Logic:** As the Native Subscription API (Selling Plans) requires a backend App installation not available in this test environment, the subscription logic is a **Frontend UI simulation**. It captures the user's intent and passes the frequency data to the cart properties, fulfilling the "Acceptable alternative" requirement.
-- **Price in Cart:** Due to Shopify's security restrictions, the cart line-item price cannot be modified via frontend JavaScript alone. In a production environment, this would be handled by the `selling_plan_id`.
+- **Subscription Logic:** This version uses native `selling_plan` parameters. Fallback logic is included to simulate the UX if no selling plans are active in the store.
+- **Styling:** Vanilla CSS with custom property tokens (`--vb-` prefix) for a clean, brand-consistent look.
+
