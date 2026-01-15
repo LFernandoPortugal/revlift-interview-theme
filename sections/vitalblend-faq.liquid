@@ -1,0 +1,194 @@
+{% comment %}
+  VITALBLEND GENERAL FAQ
+  Accordion style FAQ section for product pages.
+{% endcomment %}
+
+{%- style -%}
+  .vb-faq-{{ section.id }} {
+    max-width: 800px;
+    margin: 4rem auto;
+    padding: 0 20px;
+  }
+  .vb-faq-title {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 3rem;
+    color: #111;
+  }
+  .vb-faq-item {
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+  }
+  .vb-faq-question {
+    width: 100%;
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #111;
+    transition: color 0.2s;
+  }
+  .vb-faq-question:hover {
+    color: #E53935;
+  }
+  .vb-faq-icon {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    transition: transform 0.3s ease;
+  }
+  .vb-faq-icon::before,
+  .vb-faq-icon::after {
+    content: '';
+    position: absolute;
+    background-color: currentColor;
+    border-radius: 2px;
+  }
+  .vb-faq-icon::before {
+    width: 100%;
+    height: 2px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+  }
+  .vb-faq-icon::after {
+    width: 2px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    transition: transform 0.3s ease;
+  }
+  .vb-faq-item.active .vb-faq-icon::after {
+    transform: translateX(-50%) rotate(90deg);
+    opacity: 0;
+  }
+  .vb-faq-item.active .vb-faq-icon {
+    transform: rotate(180deg);
+  }
+
+  .vb-faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
+    color: #555;
+    line-height: 1.6;
+    font-size: 1rem;
+  }
+  .vb-faq-item.active .vb-faq-answer {
+    max-height: 1000px;
+    transition: max-height 1s ease-in-out;
+    padding-bottom: 20px;
+  }
+{%- endstyle -%}
+
+<section class="vb-faq-{{ section.id }} faq-container">
+  {% if section.settings.title != blank %}
+    <h2 class="vb-faq-title">{{ section.settings.title }}</h2>
+  {% endif %}
+
+  <div class="vb-faq-list">
+    {% for block in section.blocks %}
+      <div class="vb-faq-item" {{ block.shopify_attributes }}>
+        <button class="vb-faq-question" onclick="toggleFaq(this)">
+          <span>{{ block.settings.question }}</span>
+          <div class="vb-faq-icon"></div>
+        </button>
+        <div class="vb-faq-answer">
+          {{ block.settings.answer }}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<script>
+  function toggleFaq(btn) {
+    const item = btn.parentElement;
+    const isActive = item.classList.contains('active');
+
+    // Close other items if enabled
+    {% if section.settings.one_at_a_time %}
+      document.querySelectorAll('.vb-faq-item').forEach(i => i.classList.remove('active'));
+    {% endif %}
+
+    if (!isActive) {
+      item.classList.add('active');
+    }
+  }
+</script>
+
+{% schema %}
+{
+  "name": "VitalBlend FAQ",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Frequently Asked Questions"
+    },
+    {
+      "type": "checkbox",
+      "id": "one_at_a_time",
+      "label": "Open one at a time",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "faq",
+      "name": "FAQ Item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "How fast is the shipping?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>We ship all orders within 24-48 hours. Human delivery usually takes 3-5 business days depending on your location.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "VitalBlend FAQ",
+      "blocks": [
+        {
+          "type": "faq",
+          "settings": {
+            "question": "Is VitalBlend suitable for everyday use?",
+            "answer": "<p>Yes! Our products are designed to be part of your daily wellness routine.</p>"
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "Are there any artificial sweeteners?",
+            "answer": "<p>No. We use only natural ingredients and zero artificial fillers or sweeteners.</p>"
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "Can I cancel my subscription anytime?",
+            "answer": "<p>Absolutely. You have full control over your subscription through your account dashboard.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

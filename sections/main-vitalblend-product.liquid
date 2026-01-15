@@ -1,25 +1,23 @@
 {% comment %}
   SECTION: MAIN VITALBLEND PRODUCT
-  Description: Rebranded version maintaining high-fidelity UX.
+  Version: Final Release (Pupford Style Layout with Media Gallery)
+  Author: Luis Portugal
 {% endcomment %}
 
-{%- assign selected_variant = product.selected_or_first_available_variant -%}
-
-<div class="vb-product-wrapper">
-  <!-- Media Gallery -->
+<div class="vitalblend-wrapper">
   <div class="vb-gallery">
     {% if product.media.size > 1 %}
-      <div class="vb-thumbnails">
+      <div class="vb-thumbnails-column">
         {% for media in product.media %}
           <button
-            class="vb-thumb-btn {% if media.id == selected_variant.featured_media.id %}active{% endif %}"
+            class="vb-thumb-btn {% if media.id == product.featured_image.id %}active{% endif %}"
             data-media-id="{{ media.id }}"
-            onclick="changeMainImage('{{ media.preview_image | image_url: width: 1200 }}', this)"
+            onclick="changeMainImage('{{ media.preview_image | image_url: width: 1000, height: 1000 }}', this)"
           >
             <img
-              src="{{ media.preview_image | image_url: width: 150, height: 150, crop: 'center' }}"
-              width="75"
-              height="75"
+              src="{{ media.preview_image | image_url: width: 150, height: 150 }}"
+              width="150"
+              height="150"
               loading="lazy"
               alt="{{ media.alt | escape }}"
             >
@@ -31,34 +29,43 @@
     <div class="vb-main-image-container">
       <img
         id="ProductImage"
-        src="{{ selected_variant.featured_image | default: product.featured_image | image_url: width: 1000 }}"
+        src="{{ product.featured_image | image_url: width: 1000, height: 1000 }}"
         width="1000"
         height="1000"
         alt="{{ product.title | escape }}"
-        class="vb-main-image"
+        data-media-id="{{ product.featured_image.id }}"
       >
     </div>
   </div>
 
-  <!-- Product Info -->
   <div class="vb-info">
     <div class="vb-reviews">
-      <span class="vb-stars" style="color: #FFB800;">★★★★★</span>
-      <span class="vb-review-count">1,240 REVIEWS</span>
+      <span style="color: #FFB800; letter-spacing: 2px;">★★★★★</span>
+      <span class="vb-review-count">1,240 Reviews</span>
     </div>
 
     <h1 class="vb-title">{{ product.title }}</h1>
 
     <div class="vb-price-container">
-      <span id="ProductPrice" class="vb-price">{{ selected_variant.price | money }}</span>
+      <span id="ProductPrice" class="vb-price">{{ product.price | money }}</span>
       <span id="ComparePrice" class="vb-compare-price" style="display:none;"></span>
-      <span id="SaveBadge" class="vb-save-badge" style="display:none;">SAVE 10%</span>
+      <span id="SaveBadge" class="vb-save-badge" style="display:none;">{{ section.settings.sub_discount_badge }}</span>
     </div>
 
-    {% form 'product', product, id: 'product-form' %}
-      <input type="hidden" name="id" id="SelectedVariantId" value="{{ selected_variant.id }}">
+    <div class="vb-badges-row">
+      <div class="vb-badge-pill"><span class="vb-badge-dot"></span> Simple Ingredients</div>
+      <div class="vb-badge-pill"><span class="vb-badge-dot"></span> Made in USA</div>
+      <div class="vb-badge-pill"><span class="vb-badge-dot"></span> No Fillers</div>
+    </div>
 
-      <!-- Variant Selectors -->
+    {% form 'product', product %}
+      <input
+        type="hidden"
+        name="id"
+        id="SelectedVariantId"
+        value="{{ product.selected_or_first_available_variant.id }}"
+      >
+
       <div class="vb-options">
         {% for option in product.options_with_values %}
           <fieldset class="vb-option-group">
@@ -75,14 +82,9 @@
                     {% if option.selected_value == value %}
                       checked
                     {% endif %}
-                    onchange="updateVariantState()"
+                    onchange="updateVariantState(this)"
                   >
-                  <span class="vb-pill-inner">
-                    {% if option.name == 'Flavor' %}
-                      <span class="vb-pill-icon">🌿</span>
-                    {% endif %}
-                    {{ value }}
-                  </span>
+                  <span>{{ value }}</span>
                 </label>
               {% endfor %}
             </div>
@@ -90,489 +92,497 @@
         {% endfor %}
       </div>
 
-      <!-- Subscription Widget -->
       <div class="vb-purchase-type-container">
-        <!-- One-time -->
         <label class="vb-purchase-option active" id="OptionOneTime" onclick="setPurchaseType('onetime')">
           <input type="radio" name="purchase_mode" value="onetime" checked style="display:none;">
           <div class="vb-radio-circle"></div>
           <div class="vb-option-content">
-            <span class="vb-option-label-text">One-time purchase</span>
-            <span class="vb-option-price" id="OneTimePriceDisplay">{{ selected_variant.price | money }}</span>
+            <div class="vb-option-header">
+              <span class="vb-option-title">One-time purchase</span>
+              <span class="vb-option-price" id="PriceOneTime">{{ product.price | money }}</span>
+            </div>
           </div>
         </label>
 
-        <!-- Subscribe & Save -->
-        <!-- Subscribe & Save -->
         <label class="vb-purchase-option" id="OptionSub" onclick="setPurchaseType('subscription')">
           <input type="radio" name="purchase_mode" value="subscription" style="display:none;">
           <div class="vb-radio-circle"></div>
           <div class="vb-option-content">
             <div class="vb-option-header">
-              <span class="vb-option-label-text">Subscribe & Save</span>
-              <span class="vb-option-badge">SAVE 10%</span>
+              <div class="vb-option-title-group">
+                <span class="vb-option-title">{{ section.settings.sub_text }}</span>
+                <span class="vb-option-savings">Save {{ section.settings.sub_discount_badge }}</span>
+              </div>
+              <span class="vb-option-price" id="PriceSub">{{ product.price | times: 0.9 | money }}</span>
             </div>
-            <span class="vb-option-price" id="SubscriptionPriceDisplay">
-              {{ selected_variant.price | times: 0.9 | money }}
-            </span>
+            <div class="vb-option-extras">
+              <span class="vb-extra-tag">✓ Best Value</span>
+              <span class="vb-extra-tag">✓ Free Shipping</span>
+              <span class="vb-extra-tag">✓ Cancel Anytime</span>
+            </div>
           </div>
         </label>
 
-        <div id="SubscriptionDetails" class="vb-sub-details" style="display:none;">
-          <div class="vb-frequency-selector">
-            <label for="SellingPlan">DELIVER EVERY</label>
-            <!-- Removed 'name' attribute so this select value is NOT submitted directly as 'selling_plan' -->
-            <select id="SellingPlan" class="vb-select" onchange="updateSellingPlanId(this)">
-              {%- if product.selling_plan_groups.size > 0 -%}
-                {% for group in product.selling_plan_groups %}
-                  {% for plan in group.selling_plans %}
-                    <option value="{{ plan.id }}">{{ plan.name }}</option>
-                  {% endfor %}
-                {% endfor %}
-              {%- else -%}
-                <!-- Simulation Options -->
-                <option value="sim_1_month">Every 1 Month</option>
-                <option value="sim_2_months">Every 2 Months</option>
-                <option value="sim_3_months">Every 3 Months</option>
-              {%- endif -%}
-            </select>
-
-            <!-- Hidden input that holds the ACTUAL ID sent to Shopify -->
-            <input type="hidden" name="selling_plan" id="RealSellingPlanId" value="">
-
-            <!-- Hidden input for simulated frequency property -->
-            <input type="hidden" name="properties[Subscription Frequency]" id="SimulatedFrequency" value="">
-
-            <script>
-              function updateSellingPlanId(select) {
-                const val = select.value;
-                const text = select.options[select.selectedIndex].text;
-                const realInput = document.getElementById('RealSellingPlanId');
-                const simInput = document.getElementById('SimulatedFrequency');
-
-                if (val.startsWith('sim_')) {
-                  // Simulation mode: Clear real ID, set property
-                  realInput.value = '';
-                  simInput.value = text;
-                } else {
-                  // Real mode: Set real ID, clear property
-                  realInput.value = val;
-                  simInput.value = '';
-                }
-              }
-
-              // Initialize on load
-              document.addEventListener('DOMContentLoaded', () => {
-                const select = document.getElementById('SellingPlan');
-                if (select) updateSellingPlanId(select);
-              });
-            </script>
-          </div>
-
-          <ul class="vb-benefits">
-            <li><span>✓</span> Save 10% on every order</li>
-            <li><span>✓</span> Free Shipping</li>
-            <li><span>✓</span> Cancel anytime</li>
-          </ul>
+        <div id="SubscriptionFrequency" class="vb-frequency-selector" style="display:none;">
+          <label>Deliver every:</label>
+          <select name="properties[Shipping Frequency]" class="vb-select" disabled>
+            <option value="30 Days">30 Days (Most Popular)</option>
+            <option value="45 Days">45 Days</option>
+            <option value="60 Days">60 Days</option>
+          </select>
         </div>
       </div>
 
-      <!-- Actions -->
       <div class="vb-actions">
-        <div class="vb-quantity-selector">
-          <button type="button" onclick="adjustQty(-1)" class="qty-btn">-</button>
-          <input type="number" name="quantity" id="Quantity" value="1" min="1" readonly>
-          <button type="button" onclick="adjustQty(1)" class="qty-btn">+</button>
+        <div class="vb-quantity">
+          <input type="number" name="quantity" value="1" min="1" aria-label="Quantity">
         </div>
-        <button type="submit" name="add" id="AddToCart" class="vb-btn-add">
-          Add to Cart - <span id="ButtonPrice">{{ selected_variant.price | money }}</span>
-        </button>
+        <button type="submit" name="add" id="AddToCart" class="vb-btn-add">Add to Cart</button>
       </div>
 
-      <div class="vb-description">
-        {{ product.description }}
+      <!-- DESKTOP TABS -->
+      <div class="vb-product-tabs">
+        <div class="vb-tab-header">
+          <button type="button" class="vb-tab-link active" onclick="openTab(event, 'Description')">Description</button>
+          <button type="button" class="vb-tab-link" onclick="openTab(event, 'Nutrition')">Nutrition</button>
+          <button type="button" class="vb-tab-link" onclick="openTab(event, 'Feeding')">Feeding Guide</button>
+        </div>
+
+        <div id="Description" class="vb-tab-content active" style="display: block;">
+          <div class="vb-description-inner">{{ product.description }}</div>
+        </div>
+
+        <div id="Nutrition" class="vb-tab-content">
+          <div class="vb-description-inner">
+            {% if product.metafields.custom.nutrition_facts != blank %}
+              {{ product.metafields.custom.nutrition_facts }}
+            {% else %}
+              <p>High-quality protein sourced directly from trusted farmers. No artificial fillers or preservatives.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div id="Feeding" class="vb-tab-content">
+          <div class="vb-description-inner">
+            {% if product.metafields.custom.feeding_guide != blank %}
+              {{ product.metafields.custom.feeding_guide }}
+            {% else %}
+              <p>Serve as a treat or topper. Always provide fresh water for your pet.</p>
+            {% endif %}
+          </div>
+        </div>
       </div>
 
       <script type="application/json" id="ProductVariantsJson">
         {{ product.variants | json }}
       </script>
     {% endform %}
+
+    <!-- FREQUENTLY BOUGHT TOGETHER SECTION -->
+    {% liquid
+      assign cross_product = section.settings.cross_sell_product
+      if cross_product == blank
+        # Fallback 1: Try same collection
+        for collection in product.collections limit: 1
+          for prod in collection.products limit: 10
+            if prod.id != product.id and prod.available
+              assign cross_product = prod
+              break
+            endif
+          endfor
+        endfor
+
+        # Fallback 2: Try ALL products if still empty
+        if cross_product == blank
+          for prod in collections.all.products limit: 10
+            if prod.id != product.id and prod.available
+              assign cross_product = prod
+              break
+            endif
+          endfor
+        endif
+      endif
+
+      # Fallback 3: Mock data for preview if store is empty
+      if cross_product == blank
+        assign cross_product_title = 'VitalBlend Recovery Treats'
+        assign cross_product_price = 1499
+      else
+        assign cross_product_title = cross_product.title
+        assign cross_product_price = cross_product.price
+        assign cross_product_id = cross_product.selected_or_first_available_variant.id
+      endif
+    %}
+
+    {% if cross_product != blank or cross_product_title != blank %}
+      <div class="vb-cross-sell-container">
+        <h3>Frequently Bought Together</h3>
+        <div class="vb-cross-sell-wrapper">
+          <div class="vb-cross-items">
+            <div class="vb-cross-item">
+              <img
+                src="{{ product.featured_image | image_url: width: 200 }}"
+                alt="{{ product.title }}"
+                width="200"
+                height="200"
+                loading="lazy"
+              >
+              <div class="vb-plus">+</div>
+            </div>
+            <div class="vb-cross-item">
+              {% if cross_product != blank %}
+                <img
+                  src="{{ cross_product.featured_image | image_url: width: 200 }}"
+                  alt="{{ cross_product_title }}"
+                  width="200"
+                  height="200"
+                  loading="lazy"
+                >
+              {% else %}
+                <img
+                  src="{{ 'raw-chicken-breast.png' | asset_url }}"
+                  alt="{{ cross_product_title }}"
+                  width="200"
+                  height="200"
+                  loading="lazy"
+                >
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="vb-cross-info">
+            <div class="vb-cross-total">
+              <span>Total Price:</span>
+              <strong id="CrossSellTotal">{{ product.price | plus: cross_product_price | money }}</strong>
+            </div>
+            <button
+              type="button"
+              class="vb-btn-cross-add"
+              {% if cross_product_id %}
+                onclick="addCrossSellToCart('{{ product.selected_or_first_available_variant.id }}', '{{ cross_product_id }}')"
+              {% else %}
+                onclick="alert('This is a preview. Add a real product in Shopify Admin to enable cart.')"
+              {% endif %}
+            >
+              Add Both to Cart
+            </button>
+            <p class="vb-cross-note">
+              <strong>{{ cross_product_title }}</strong>
+              <br>
+              <span class="vb-small-price">+ {{ cross_product_price | money }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
   </div>
 </div>
 
-<!-- Supporting Sections -->
-<div class="vb-extra-sections">
+<!-- STICKY BUY BAR -->
+<div id="StickyBuyBar" class="vb-sticky-bar">
+  <div class="vb-sticky-container">
+    <div class="vb-sticky-product">
+      <img
+        src="{{ product.featured_image | image_url: width: 100, height: 100 }}"
+        width="50"
+        height="50"
+        alt="{{ product.title }}"
+      >
+      <div class="vb-sticky-info">
+        <span class="vb-sticky-title">{{ product.title }}</span>
+        <div class="vb-sticky-price-row">
+          <span id="StickyPrice" class="vb-sticky-price">{{ product.price | money }}</span>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="vb-sticky-atc" onclick="document.getElementById('AddToCart').click()">
+      Add to Cart
+    </button>
+  </div>
+</div>
+
+<div class="vb-sections-container">
   {% if product.metafields.custom.promotional_headline != blank %}
-    <h2 class="vb-section-headline">{{ product.metafields.custom.promotional_headline }}</h2>
+    <div class="vb-section-block vb-headline-block">
+      <h2>{{ product.metafields.custom.promotional_headline | escape }}</h2>
+    </div>
   {% endif %}
 
-  <!-- Icon Grid -->
-  <div class="vb-icon-grid">
-    <div class="vb-icon-item">
-      <div class="vb-icon-circle">🌱</div>
-      <span>No filler ingredients</span>
-    </div>
-    <div class="vb-icon-item">
-      <div class="vb-icon-circle">🔥</div>
-      <span>Low calorie</span>
-    </div>
-    <div class="vb-icon-item">
-      <div class="vb-icon-circle">💪</div>
-      <span>Nutrient dense</span>
-    </div>
-    <div class="vb-icon-item">
-      <div class="vb-icon-circle">🇺🇸</div>
-      <span>Made in USA</span>
+  <!-- INGREDIENTS VISUAL BREAKDOWN -->
+  <div class="vb-section-block vb-ingredients-visual">
+    <h3>What's Inside</h3>
+    <div class="vb-ingredients-grid">
+      <div class="vb-ingredient-card">
+        <div class="vb-ingredient-image-wrapper">
+          <img
+            src="{{ 'raw-chicken-breast.png' | asset_url }}"
+            alt="Fresh Chicken"
+            loading="lazy"
+            width="400"
+            height="400"
+          >
+        </div>
+        <div class="vb-ingredient-info">
+          <h4>Fresh Chicken</h4>
+          <p>High-quality, lean protein to support muscle growth and energy.</p>
+        </div>
+      </div>
+
+      <div class="vb-ingredient-card">
+        <div class="vb-ingredient-image-wrapper">
+          <img src="{{ 'sweet-potato.png' | asset_url }}" alt="Sweet Potato" loading="lazy" width="400" height="400">
+        </div>
+        <div class="vb-ingredient-info">
+          <h4>Sweet Potato</h4>
+          <p>Rich in fiber and vitamins for healthy digestion and immune support.</p>
+        </div>
+      </div>
+
+      <div class="vb-ingredient-card">
+        <div class="vb-ingredient-image-wrapper">
+          <img
+            src="{{ 'rosemary-oil.png' | asset_url }}"
+            alt="Rosemary Extract"
+            loading="lazy"
+            width="400"
+            height="400"
+          >
+        </div>
+        <div class="vb-ingredient-info">
+          <h4>Rosemary Extract</h4>
+          <p>A natural antioxidant to keep our treats fresh and tasty.</p>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- How to Use -->
-  <div class="vb-how-to-use">
-    <h3>Simple Steps for Vitalblend</h3>
-    <div class="vb-steps">
-      <div class="vb-step">
-        <div class="vb-step-image">1</div>
-        <h4>Prepare</h4>
-        <p>Measure the desired amount of Vitalblend for your routine.</p>
+  <div class="vb-section-block vb-icons-block">
+    <div class="vb-icons-grid">
+      <div class="vb-icon-item">
+        <span class="vb-icon-emoji" role="img" aria-label="seedling">🌱</span>
+        <span>Simple Ingredients</span>
       </div>
-      <div class="vb-step">
-        <div class="vb-step-image">2</div>
-        <h4>Mix</h4>
-        <p>Incorporate easily into your preferred method of use.</p>
+      <div class="vb-icon-item">
+        <span class="vb-icon-emoji" role="img" aria-label="flag">🇺🇸</span>
+        <span>Made in USA</span>
       </div>
-      <div class="vb-step">
-        <div class="vb-step-image">3</div>
-        <h4>Enjoy</h4>
-        <p>Repeat daily to see the full benefits of our formula.</p>
+      <div class="vb-icon-item">
+        <span class="vb-icon-emoji" role="img" aria-label="down arrow">⬇️</span>
+        <span>Low Calorie</span>
+      </div>
+      <div class="vb-icon-item">
+        <span class="vb-icon-emoji" role="img" aria-label="prohibited">🚫</span>
+        <span>No Fillers</span>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Sticky Bar -->
-<div id="StickyBar" class="vb-sticky-bar">
-  <div class="sticky-container">
-    <div class="sticky-product">
-      <img src="{{ product.featured_image | image_url: width: 100 }}" width="50" height="50" alt="">
-      <div class="sticky-text">
-        <span class="sticky-title">{{ product.title }}</span>
-        <span class="sticky-variant" id="StickyVariantLabel"></span>
+  {% if product.metafields.custom.how_to_use_steps.value != blank %}
+    <div class="vb-section-block vb-how-to-use-block">
+      <h3>How to Use</h3>
+      <div class="vb-steps-grid">
+        {% for step in product.metafields.custom.how_to_use_steps.value %}
+          <div class="vb-step-card">
+            <div class="vb-step-icon-placeholder">
+              {% if step.icon != blank %}
+                <img
+                  src="{{ step.icon | image_url: width: 80, height: 80 }}"
+                  width="80"
+                  height="80"
+                  alt="{{ step.title | escape }}"
+                >
+              {% else %}
+                <span>✓</span>
+              {% endif %}
+            </div>
+            <div class="vb-step-text">
+              <strong>{{ step.title | escape }}</strong>
+              <p>{{ step.description | escape }}</p>
+            </div>
+          </div>
+        {% endfor %}
       </div>
     </div>
-    <div class="sticky-actions">
-      <span class="sticky-price" id="StickyPrice"></span>
-      <button type="button" onclick="document.getElementById('AddToCart').click()" class="vb-btn-add">
-        Add to Cart
-      </button>
-    </div>
-  </div>
+  {% endif %}
 </div>
 
 {% style %}
-  :root {
-    --vb-red: #e53935;
-    --vb-black: #1a1a1a;
-    --vb-gray: #f5f5f5;
-    --vb-border: #dddddd;
-  }
-
-  .vb-product-wrapper {
+  /* --- MAIN LAYOUT --- */
+  .vitalblend-wrapper {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 50px;
-    max-width: 1300px;
-    margin: 40px auto;
-    padding: 0 30px;
-    font-family: 'Outfit', sans-serif;
+    grid-template-columns: 1fr 1fr; /* Split 50/50 */
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 3rem auto;
+    padding: 0 20px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #222;
+    align-items: start;
   }
 
-  /* Gallery */
+  /* --- MEDIA GALLERY STYLES --- */
   .vb-gallery {
     display: flex;
+    flex-direction: row; /* Horizontal layout for desktop */
     gap: 20px;
-    align-items: flex-start;
   }
-  .vb-thumbnails {
+  .vb-thumbnails-column {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    width: 80px;
+    flex-shrink: 0;
+  }
+  .vb-main-image-container {
+    flex-grow: 1;
+  }
+  .vb-main-image-container img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    background: #f4f4f4;
+    object-fit: cover;
   }
   .vb-thumb-btn {
+    width: 80px;
+    height: 80px;
+    padding: 0;
     border: 2px solid transparent;
     border-radius: 8px;
-    padding: 0;
-    cursor: pointer;
     overflow: hidden;
-    background: var(--vb-gray);
-    width: 75px;
-    height: 75px;
-  }
-  .vb-thumb-btn.active {
-    border-color: var(--vb-black);
+    cursor: pointer;
+    background: #f4f4f4;
+    transition: all 0.2s ease;
   }
   .vb-thumb-btn img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-
-  .vb-main-image-container {
-    flex: 1;
-    position: relative;
-    border-radius: 20px;
-    overflow: hidden;
-    background: var(--vb-gray);
+  .vb-thumb-btn.active {
+    border-color: #000;
   }
-  .vb-main-image {
-    width: 100%;
-    height: auto;
+
+  /* --- TYPOGRAPHY & PRICING --- */
+  .vb-title { font-size: 3rem; margin: 10px 0 20px; line-height: 1; letter-spacing: -1px; }
+
+  .vb-reviews { font-size: 1.1rem; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .vb-review-count { text-decoration: underline; color: #666; font-size: 0.9rem;}
+
+  .vb-price { font-size: 2.5rem; font-weight: 700; color: #000; }
+  .vb-price-container { margin-bottom: 1rem; display: flex; align-items: center; gap: 15px; }
+  .vb-save-badge { background: #E53935; color: white; padding: 5px 10px; font-weight: bold; text-transform: uppercase; font-size: 0.9rem; border-radius: 4px;}
+  .vb-compare-price { font-size: 1.5rem; color: #888; text-decoration: line-through; }
+
+  /* --- BADGES --- */
+  .vb-badges-row { display: flex; gap: 12px; margin-bottom: 2rem; flex-wrap: wrap; }
+  .vb-badge-pill {
+    background: #fdf6e3; color: #856404; font-size: 0.85rem; font-weight: 600; padding: 6px 12px; border-radius: 20px;
+    display: flex; align-items: center; gap: 6px; border: 1px solid #ffeeba;
+  }
+  .vb-badge-dot { width: 6px; height: 6px; background: #856404; border-radius: 50%; }
+
+  /* --- VARIANT SELECTORS (Pills) --- */
+  .vb-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;}
+  /* Hides the native radio button circle */
+  .vb-pill input { display: none; }
+  .vb-pill span {
     display: block;
-    transition: transform 0.5s ease;
-  }
-  .vb-main-image-container:hover .vb-main-image {
-    transform: scale(1.05);
-  }
-
-  /* Info */
-  .vb-reviews {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-  .vb-title {
-    font-size: 42px;
-    font-weight: 800;
-    margin: 0 0 15px;
-    color: var(--vb-black);
-    line-height: 1.1;
-  }
-  .vb-price {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--vb-black);
-  }
-
-  /* Pills */
-  .vb-option-label {
-    font-size: 14px;
-    font-weight: 800;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    border: none;
-    padding: 0;
-  }
-  .vb-option-group {
-    border: none;
-    padding: 0;
-    margin-bottom: 25px;
-  }
-  .vb-pills {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .vb-pill input {
-    display: none;
-  }
-  .vb-pill-inner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
-    border: 1px solid var(--vb-border);
-    border-radius: 50px;
+    padding: 12px 25px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
     cursor: pointer;
-    font-weight: 700;
-    transition: 0.2s;
+    font-size: 1rem;
+    transition: all 0.2s;
   }
-  .vb-pill input:checked + .vb-pill-inner {
-    background: var(--vb-black);
-    color: white;
-    border-color: var(--vb-black);
-  }
+  .vb-pill input:checked + span { border-color: #000; background: #000; color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+  .vb-option-label { font-weight: bold; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+  .vb-option-group { margin-bottom: 1.5rem; border: none; padding: 0; }
 
-  /* Subscription Widget */
-  .vb-purchase-type-container {
-    border: 1px solid var(--vb-border);
-    border-radius: 12px;
-    margin: 30px 0;
-    overflow: hidden;
-  }
-  .vb-purchase-option {
-    display: flex;
-    align-items: center;
-    padding: 20px;
-    cursor: pointer;
-    background: white;
-    transition: 0.2s;
-    border-bottom: 1px solid var(--vb-border);
-  }
-  .vb-purchase-option:last-child {
-    border-bottom: none;
-  }
-  .vb-purchase-option.active {
-    background: #faf9f6;
-  }
+  /* --- SUBSCRIPTION WIDGET --- */
+  .vb-purchase-type-container { margin: 2rem 0; border: 1px solid #ddd; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+  .vb-purchase-option { display: flex; align-items: flex-start; padding: 20px; cursor: pointer; border-bottom: 1px solid #eee; transition: all 0.2s; border-left: 6px solid transparent; }
+  .vb-purchase-option:last-of-type { border-bottom: none; }
+  .vb-purchase-option.active { background: #fdfdfd; border-left-color: #E53935; } /* ACTIVE STATE RED BORDER */
 
-  .vb-radio-circle {
-    width: 22px;
-    height: 22px;
-    border: 2px solid var(--vb-border);
-    border-radius: 50%;
-    margin-right: 15px;
-    position: relative;
-  }
-  .vb-purchase-option.active .vb-radio-circle {
-    border-color: var(--vb-black);
-  }
-  .vb-purchase-option.active .vb-radio-circle::after {
-    content: '';
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    width: 10px;
-    height: 10px;
-    background: var(--vb-black);
-    border-radius: 50%;
-  }
+  .vb-radio-circle { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 50%; margin-right: 15px; position: relative; flex-shrink: 0; margin-top: 2px; }
+  .vb-purchase-option.active .vb-radio-circle { border-color: #000; }
+  .vb-purchase-option.active .vb-radio-circle::after { content:''; position: absolute; top:3px; left:3px; width:10px; height:10px; background:#000; border-radius:50%; }
 
-  .vb-option-content {
-    flex: 1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .vb-option-label-text {
-    font-weight: 800;
-    font-size: 16px;
-  }
-  .vb-option-price {
-    font-weight: 800;
-    font-size: 16px;
-  }
-  .vb-option-badge {
-    background: var(--vb-red);
-    color: white;
-    font-size: 10px;
-    font-weight: 900;
-    padding: 4px 8px;
-    border-radius: 4px;
-    margin-left: 10px;
-  }
+  .vb-option-content { flex-grow: 1; }
+  .vb-option-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .vb-option-title { font-weight: 700; font-size: 1.1rem; color: #111; }
+  .vb-option-price { font-weight: 700; color: #000; font-size: 1.1rem; }
 
-  .vb-sub-details {
-    padding: 20px;
-    background: #f1f0e8;
-    border-top: 1px solid var(--vb-border);
-  }
-  .vb-frequency-selector label {
-    display: block;
-    font-size: 11px;
-    font-weight: 900;
-    margin-bottom: 5px;
-  }
-  .vb-select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--vb-border);
-    border-radius: 8px;
-    font-weight: 700;
-  }
+  .vb-option-title-group { display: flex; flex-direction: column; gap: 4px; }
+  .vb-option-savings { color: #E53935; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; }
 
-  .vb-benefits {
-    list-style: none;
-    padding: 0;
-    margin: 15px 0 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .vb-benefits li {
-    font-size: 13px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .vb-benefits li span {
-    color: #43a047;
-    font-weight: 900;
-  }
+  .vb-option-extras { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .vb-extra-tag { font-size: 0.8rem; color: #2e7d32; font-weight: 600; background: #e8f5e9; padding: 2px 8px; border-radius: 4px; }
 
-  /* Actions */
-  .vb-actions {
-    display: flex;
-    gap: 15px;
-    margin-top: 30px;
-  }
-  .vb-quantity-selector {
-    display: flex;
-    align-items: center;
-    border: 1px solid var(--vb-border);
-    border-radius: 50px;
-    padding: 5px;
-  }
-  .qty-btn {
-    background: none;
-    border: none;
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    font-size: 20px;
-    font-weight: 700;
-  }
-  .vb-quantity-selector input {
-    border: none;
-    width: 30px;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 700;
-    -moz-appearance: textfield;
-  }
-  .vb-quantity-selector input::-webkit-outer-spin-button,
-  .vb-quantity-selector input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-  }
+  .vb-frequency-selector { background: #f1f1f1; padding: 15px 20px; border-top: 1px solid #ddd;}
+  .vb-select { width: 100%; padding: 10px; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px;}
 
-  .vb-btn-add {
-    background: var(--vb-red);
-    color: white;
-    border: none;
-    flex: 1;
-    padding: 18px;
-    border-radius: 50px;
-    font-size: 16px;
-    font-weight: 900;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-  .vb-btn-add:hover {
-    filter: brightness(1.1);
-  }
+  /* --- ACTIONS (Add to Cart) --- */
+  .vb-actions { display: flex; gap: 10px; height: 55px; margin-top: 2rem; }
+  .vb-quantity input { height: 100%; width: 70px; text-align: center; font-size: 1.2rem; border: 1px solid #ccc; border-radius: 6px; }
+  .vb-btn-add { flex: 1; background: {{ section.settings.btn_color }}; color: white; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; border-radius: 6px; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.2s;}
+  .vb-btn-add:hover { opacity: 0.9; }
 
-  /* Extra Sections */
-  .vb-extra-sections {
+  /* --- TABS SYSTEM --- */
+  .vb-product-tabs { margin-top: 3rem; border-top: 1px solid #eee; padding-top: 2rem;}
+  .vb-tab-header { display: flex; gap: 25px; border-bottom: 1px solid #eee; margin-bottom: 20px; }
+  .vb-tab-link {
+    background: none; border: none; padding: 10px 0; font-size: 1.1rem; font-weight: 600; cursor: pointer; color: #888; border-bottom: 2px solid transparent;
+    transition: all 0.3s;
+  }
+  .vb-tab-link:hover { color: #000; }
+  .vb-tab-link.active { color: #000; border-bottom-color: #000; }
+  .vb-tab-content { display: none; }
+  .vb-tab-content.active { display: block; animation: fadeIn 0.4s; }
+  .vb-description-inner { line-height: 1.6; font-size: 1.1rem; color: #444; }
+
+  /* --- STICKY BUY BAR --- */
+  .vb-sticky-bar {
+    position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); padding: 15px 0; z-index: 999;
+    transform: translateY(100%); transition: transform 0.3s ease-in-out;
+  }
+  .vb-sticky-bar.visible { transform: translateY(0); }
+  .vb-sticky-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; }
+  .vb-sticky-product { display: flex; align-items: center; gap: 15px; }
+  .vb-sticky-product img { border-radius: 5px; background: #f4f4f4; border: 1px solid #eee;}
+  .vb-sticky-info { display: flex; flex-direction: column; }
+  .vb-sticky-title { font-weight: bold; font-size: 1.2rem; }
+  .vb-sticky-price { font-weight: 700; color: #000; font-size: 1.1rem;}
+  .vb-sticky-atc { background: #000; color: #fff; border: none; padding: 12px 30px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; text-transform: uppercase;}
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ========================================= */
+  /* LOWER FULL-WIDTH SECTIONS STYLES */
+  /* ========================================= */
+  .vb-sections-container {
     max-width: 1000px;
-    margin: 80px auto;
+    margin: 5rem auto 8rem;
     padding: 0 20px;
     text-align: center;
   }
-  .vb-section-headline {
-    font-size: 48px;
+
+  .vb-section-block { margin-bottom: 6rem; }
+
+  /* Headline Section */
+  .vb-headline-block h2 {
+    font-size: 2.8rem;
+    line-height: 1.2;
+    color: #111;
     font-weight: 800;
-    line-height: 1;
-    margin-bottom: 60px;
   }
 
-  .vb-icon-grid {
+  /* Icons Grid Section */
+  .vb-icons-grid {
     display: flex;
     justify-content: center;
-    gap: 50px;
-    margin-bottom: 80px;
+    gap: 4rem;
     flex-wrap: wrap;
   }
   .vb-icon-item {
@@ -580,235 +590,328 @@
     flex-direction: column;
     align-items: center;
     gap: 15px;
-    font-weight: 800;
-    font-size: 14px;
-    width: 150px;
+    font-weight: bold;
+    font-size: 1.1rem;
   }
-  .vb-icon-circle {
+  .vb-icon-emoji { font-size: 3.5rem; }
+
+  /* How to Use Section */
+  .vb-how-to-use-block h3 { font-size: 2.2rem; margin-bottom: 3rem; font-weight: 700;}
+  .vb-steps-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2.5rem; text-align: left; }
+  .vb-step-card {
+    background: #fff;
+    padding: 35px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* Enhanced shadow for depth */
+    border: 1px solid #f0f0f0;
+    transition: transform 0.3s ease;
+  }
+  .vb-step-card:hover { transform: translateY(-5px); }
+
+  /* Icon container - transparent background */
+  .vb-step-icon-placeholder {
     width: 80px;
     height: 80px;
-    background: var(--vb-gray);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 35px;
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
   }
+  .vb-step-icon-placeholder img { width: 100%; height: 100%; object-fit: contain; }
+  .vb-step-text strong { display: block; font-size: 1.2rem; margin-bottom: 10px; }
+  .vb-step-text p { color: #666; line-height: 1.5; }
 
-  .vb-how-to-use h3 {
-    font-size: 32px;
-    font-weight: 800;
-    margin-bottom: 40px;
-  }
-  .vb-steps {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-    text-align: center;
-  }
-  .vb-step-image {
-    width: 60px;
-    height: 60px;
-    background: var(--vb-black);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 20px;
-    font-weight: 900;
-    font-size: 24px;
-  }
-  .vb-step h4 {
-    font-size: 20px;
-    font-weight: 900;
-    margin: 0 0 10px;
-    text-transform: uppercase;
-  }
-  .vb-step p {
-    color: #666;
-    font-size: 15px;
-    line-height: 1.5;
-  }
 
-  /* Sticky Bar */
-  .vb-sticky-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background: white;
-    z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 15px 0;
-    transform: translateY(-100%);
-    transition: 0.3s;
-  }
-  .vb-sticky-bar.visible {
-    transform: translateY(0);
-  }
-  .sticky-container {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 0 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .sticky-product {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-  .sticky-text {
-    display: flex;
-    flex-direction: column;
-  }
-  .sticky-title {
-    font-weight: 800;
-    font-size: 16px;
-  }
-  .sticky-variant {
-    font-size: 12px;
-    color: #666;
-  }
-  .sticky-actions {
-    display: flex;
-    align-items: center;
-    gap: 30px;
-  }
-  .sticky-price {
-    font-weight: 800;
-    font-size: 20px;
-  }
-  .sticky-actions .vb-btn-add {
-    padding: 12px 30px;
-    font-size: 14px;
-  }
+  /* --- CROSS SELL SECTION --- */
+  .vb-cross-sell-container { margin-top: 3rem; background: #f9f9f9; padding: 25px; border-radius: 12px; border: 1px solid #eee; }
+  .vb-cross-sell-container h3 { margin-top: 0; font-size: 1.3rem; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
+  .vb-cross-sell-wrapper { display: flex; gap: 20px; align-items: center; }
+  .vb-cross-items { display: flex; align-items: center; gap: 15px; }
+  .vb-cross-item img { width: 90px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; background: #fff; }
+  .vb-plus { font-size: 1.5rem; font-weight: bold; color: #888; }
+  .vb-cross-info { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .vb-cross-total { font-size: 1.1rem; }
+  .vb-btn-cross-add { background: #111; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-size: 0.9rem;}
+  .vb-btn-cross-add:hover { background: #333; }
+  .vb-cross-note { font-size: 0.9rem; color: #555; margin: 0; line-height: 1.4;}
+  .vb-small-price { color: #E53935; font-weight: 700; }
 
+  /* --- INGREDIENTS VISUAL STYLES --- */
+  .vb-ingredients-visual h3 { font-size: 2.2rem; margin-bottom: 3rem; font-weight: 700; }
+  .vb-ingredients-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem; margin-top: 2rem;
+  }
+  .vb-ingredient-card {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .vb-ingredient-image-wrapper {
+    width: 200px; height: 200px; border-radius: 50%; background: #fdfdfd;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+    border: 1px solid #f0f0f0; box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+    overflow: hidden; transition: transform 0.3s ease;
+  }
+  .vb-ingredient-card:hover .vb-ingredient-image-wrapper { transform: scale(1.05); }
+  .vb-ingredient-image-wrapper img { width: 85%; height: 85%; object-fit: contain; }
+  .vb-ingredient-info h4 { margin: 10px 0; font-size: 1.4rem; color: #111; }
+  .vb-ingredient-info p { color: #666; font-size: 1rem; line-height: 1.5; margin: 0;}
+
+  /* --- RESPONSIVE DESIGN --- */
   @media (max-width: 900px) {
-    .vb-product-wrapper {
-      grid-template-columns: 1fr;
-    }
-    .vb-gallery {
-      flex-direction: column-reverse;
-    }
-    .vb-thumbnails {
-      flex-direction: row;
-    }
-    .vb-steps {
-      grid-template-columns: 1fr;
-    }
-    .vb-sticky-bar {
-      display: none;
-    }
+    .vb-cross-sell-wrapper { flex-direction: column; text-align: center; }
+    .vb-cross-info { width: 100%; }
+    .vb-btn-cross-add { width: 100%; }
+    .vitalblend-wrapper { grid-template-columns: 1fr; gap: 3rem; }
+    .vb-gallery { flex-direction: column-reverse; }
+    .vb-thumbnails-column { flex-direction: row; width: 100%; overflow-x: auto; padding-bottom: 5px; }
+    .vb-title { font-size: 2.5rem; }
+    .vb-icons-grid { gap: 2rem; }
+    .vb-steps-grid { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto;}
+    .vb-step-card { display: flex; align-items: flex-start; gap: 20px; padding: 25px;}
+    .vb-step-icon-placeholder { margin-bottom: 0; width: 60px; height: 60px; flex-shrink: 0;}
+    .vb-sticky-info { display: none; } /* Hide title/price on small mobile for space */
+    .vb-ingredients-grid { grid-template-columns: 1fr; gap: 4rem; }
+    .vb-ingredient-image-wrapper { width: 160px; height: 160px; }
   }
 {% endstyle %}
 
 <script>
+  // Parse variant data stored in the Liquid script tag
   const productVariants = JSON.parse(document.getElementById('ProductVariantsJson').textContent);
+  const mainImageEl = document.getElementById('ProductImage');
+  
+  // Initialize state
+  let currentVariantPrice = {{ product.price }};
   let isSubscription = false;
 
-  function adjustQty(amount) {
-    const input = document.getElementById('Quantity');
-    let val = parseInt(input.value) + amount;
-    if (val < 1) val = 1;
-    input.value = val;
+  // --- NEW: FUNCTION TO HANDLE THUMBNAIL CLICKS ---
+  function changeMainImage(newSrc, clickedBtn) {
+    // 1. Update main image source
+    mainImageEl.src = newSrc;
+    
+    // 2. Update active state on thumbnails
+    document.querySelectorAll('.vb-thumb-btn').forEach(btn => btn.classList.remove('active'));
+    clickedBtn.classList.add('active');
   }
 
-  function changeMainImage(src, btn) {
-    document.getElementById('ProductImage').src = src;
-    document.querySelectorAll('.vb-thumb-btn').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-  }
 
-  function updateVariantState() {
-    const selectedValues = Array.from(document.querySelectorAll('.vb-pill input:checked')).map((el) => el.value);
-    const matchedVariant = productVariants.find((variant) => {
-      return selectedValues.every((val) => variant.options.includes(val));
+  // --- FUNCTION TO HANDLE VARIANT CHANGES ---
+  function updateVariantState(input) {
+    // 1. Update visual label text
+    const labelSpan = document.getElementById(`Label-${input.name}`);
+    if(labelSpan) labelSpan.textContent = input.value;
+    
+    // 2. Find matching variant based on all selected radio inputs
+    const selectedValues = Array.from(document.querySelectorAll('.vb-pill input:checked')).map(el => el.value);
+    const matchedVariant = productVariants.find(variant => {
+      return selectedValues.every(val => variant.options.includes(val));
     });
-
+    
     if (matchedVariant) {
+      // A. Update hidden ID for form submission
       document.getElementById('SelectedVariantId').value = matchedVariant.id;
+      
+      // B. Update base price variable
+      currentVariantPrice = matchedVariant.price;
+      
+      // C. Update URL parameters silently
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.set('variant', matchedVariant.id);
+      window.history.replaceState({}, '', newUrl);
 
-      // Update price displays
-      const basePrice = matchedVariant.price;
-      const subPrice = basePrice * 0.9;
+      // D. UPDATE IMAGE & THUMBNAILS (Enhanced Logic)
+      if (matchedVariant.featured_image && matchedVariant.featured_image.src) {
+         let newImageSrc = matchedVariant.featured_image.src;
+         if (newImageSrc.startsWith('http:')) newImageSrc = newImageSrc.replace('http:', 'https:');
+         mainImageEl.src = newImageSrc;
 
-      document.getElementById('OneTimePriceDisplay').innerText = formatMoney(basePrice);
-      document.getElementById('SubscriptionPriceDisplay').innerText = formatMoney(subPrice);
-
-      // Update labels
-      document.querySelectorAll('.vb-option-group').forEach((group) => {
-        const name = group.querySelector('legend').innerText.split(':')[0].trim();
-        const span = document.getElementById(`Label-${name}`);
-        const checked = group.querySelector('input:checked');
-        if (span && checked) span.innerText = checked.value;
-      });
-
-      // Update images
-      if (matchedVariant.featured_media) {
-        const btn = document.querySelector(`.vb-thumb-btn[data-media-id="${matchedVariant.featured_media.id}"]`);
-        if (btn) btn.click();
+         // Update Active Thumbnail Highlight
+         const matchingThumbBtn = document.querySelector(`.vb-thumb-btn[data-media-id="${matchedVariant.featured_image.id}"]`);
+         if (matchingThumbBtn) {
+            document.querySelectorAll('.vb-thumb-btn').forEach(btn => btn.classList.remove('active'));
+            matchingThumbBtn.classList.add('active');
+         }
+      } else if (matchedVariant.featured_media && matchedVariant.featured_media.preview_image) {
+         // Some older or specific Shopify versions might use featured_media
+         mainImageEl.src = matchedVariant.featured_media.preview_image.src;
       }
 
-      updateActivePrice();
-      updateStickyBar(matchedVariant);
+      // E. Refresh displayed prices
+      updatePriceDisplay();
     }
   }
 
+  // --- FUNCTION TO HANDLE SUBSCRIPTION TOGGLE ---
   function setPurchaseType(type) {
-    isSubscription = type === 'subscription';
-    document.getElementById('OptionOneTime').classList.toggle('active', !isSubscription);
-    document.getElementById('OptionSub').classList.toggle('active', isSubscription);
+    const containerFreq = document.getElementById('SubscriptionFrequency');
+    const optionOne = document.getElementById('OptionOneTime');
+    const optionSub = document.getElementById('OptionSub');
+    const selectFreq = containerFreq.querySelector('select');
+    
+    // Reset UI state
+    optionOne.classList.remove('active');
+    optionSub.classList.remove('active');
 
-    const subDetails = document.getElementById('SubscriptionDetails');
-    if (subDetails) subDetails.style.display = isSubscription ? 'block' : 'none';
-
-    updateActivePrice();
-  }
-
-  function updateActivePrice() {
-    const variantId = document.getElementById('SelectedVariantId').value;
-    const variant = productVariants.find((v) => v.id == variantId);
-    let price = variant.price;
-    if (isSubscription) price = price * 0.9;
-
-    document.getElementById('ProductPrice').innerText = formatMoney(price);
-    document.getElementById('ButtonPrice').innerText = formatMoney(price);
-  }
-
-  function formatMoney(cents) {
-    return '$' + (cents / 100).toFixed(2);
-  }
-
-  function updateStickyBar(variant) {
-    document.getElementById('StickyPrice').innerText = document.getElementById('ProductPrice').innerText;
-    document.getElementById('StickyVariantLabel').innerText = variant.title;
-  }
-
-  // Sticky Bar Logic
-  window.onscroll = function () {
-    const bar = document.getElementById('StickyBar');
-    const trigger = document.getElementById('AddToCart').getBoundingClientRect().bottom;
-    if (trigger < 0) {
-      bar.classList.add('visible');
+    if (type === 'subscription') {
+      isSubscription = true;
+      optionSub.classList.add('active');
+      containerFreq.style.display = 'block';
+      selectFreq.disabled = false;
+      document.getElementById('PriceSub').style.color = '#E53935';
+      document.getElementById('PriceOneTime').style.color = '#111';
     } else {
-      bar.classList.remove('visible');
+      isSubscription = false;
+      optionOne.classList.add('active');
+      containerFreq.style.display = 'none';
+      selectFreq.disabled = true;
+      document.getElementById('PriceOneTime').style.color = '#000';
+      document.getElementById('PriceSub').style.color = '#111';
+    }
+    updatePriceDisplay();
+  }
+
+  // --- UPDATED PRICE DISPLAY SYNC ---
+  function updatePriceDisplay() {
+    const priceEl = document.getElementById('ProductPrice');
+    const compareEl = document.getElementById('ComparePrice');
+    const badgeEl = document.getElementById('SaveBadge');
+    
+    // Sync price labels inside the radio options
+    const priceOneTimeLabel = document.getElementById('PriceOneTime');
+    const priceSubLabel = document.getElementById('PriceSub');
+    
+    if (priceOneTimeLabel) priceOneTimeLabel.innerText = formatMoney(currentVariantPrice);
+    if (priceSubLabel) priceSubLabel.innerText = formatMoney(currentVariantPrice * 0.9);
+    
+    let finalPrice = currentVariantPrice;
+
+    if (isSubscription) {
+      // Apply 10% discount simulation
+      finalPrice = currentVariantPrice * 0.9; 
+      compareEl.innerText = formatMoney(currentVariantPrice);
+      compareEl.style.display = 'inline';
+      badgeEl.style.display = 'inline-block';
+    } else {
+      compareEl.style.display = 'none';
+      badgeEl.style.display = 'none';
+    }
+    priceEl.innerText = formatMoney(finalPrice);
+  }
+
+  // Helper utility for currency formatting
+  function formatMoney(cents) { 
+    return '$' + (cents / 100).toFixed(2); 
+  }
+
+  // --- TABS LOGIC ---
+  function openTab(evt, tabName) {
+    let i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("vb-tab-content");
+    for (i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+      tabcontent[i].classList.remove("active");
+    }
+    tablinks = document.getElementsByClassName("vb-tab-link");
+    for (i = 0; i < tablinks.length; i++) {
+      tablinks[i].classList.remove("active");
+    }
+    document.getElementById(tabName).style.display = "block";
+    document.getElementById(tabName).classList.add("active");
+    evt.currentTarget.classList.add("active");
+  }
+
+  // --- STICKY BAR SCROLL LOGIC ---
+  window.addEventListener('scroll', function() {
+    const atcButton = document.getElementById('AddToCart');
+    const stickyBar = document.getElementById('StickyBuyBar');
+    if (!atcButton || !stickyBar) return;
+
+    const atcPosition = atcButton.getBoundingClientRect().bottom;
+    if (atcPosition < 0) {
+      stickyBar.classList.add('visible');
+    } else {
+      stickyBar.classList.remove('visible');
+    }
+  });
+
+  // Sync Sticky Price
+  const originalUpdatePriceDisplay = updatePriceDisplay;
+  updatePriceDisplay = function() {
+    originalUpdatePriceDisplay();
+    const stickyPrice = document.getElementById('StickyPrice');
+    const mainPrice = document.getElementById('ProductPrice');
+    if (stickyPrice && mainPrice) {
+      stickyPrice.innerText = mainPrice.innerText;
     }
   };
 
-  // Initial call
-  updateVariantState();
+  // --- CROSS SELL ADD TO CART ---
+  function addCrossSellToCart(mainId, crossId) {
+     const formData = {
+       items: [
+         { id: mainId, quantity: 1, selling_plan: isSubscription ? '{{ product.selected_selling_plan.id }}' : null }, 
+         { id: crossId, quantity: 1 }
+       ]
+     };
+     
+     // Note: If subscription logic for main product is complex (requires specific selling_plan ID), 
+     // we might need to fetch the selected plan ID from the main form. 
+     // For this iteration, we keep it simple or assume one-time for cross-sell.
+     
+     fetch(window.Shopify.routes.root + 'cart/add.js', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify(formData)
+     })
+     .then(response => {
+       return response.json();
+     })
+     .then(data => {
+        // Redirect to cart or open drawer
+        window.location.href = '/cart';
+     })
+     .catch((error) => {
+       console.error('Error:', error);
+     });
+  }
 </script>
 
 {% schema %}
 {
-  "name": "Vitalblend Product",
+  "name": "VitalBlend Product",
   "settings": [
     {
       "type": "header",
-      "content": "Section Settings"
+      "content": "Cross-Sell Settings"
+    },
+    {
+      "type": "product",
+      "id": "cross_sell_product",
+      "label": "Frequently Bought Together Product"
+    },
+    {
+      "type": "header",
+      "content": "Subscription Settings"
+    },
+    {
+      "type": "text",
+      "id": "sub_text",
+      "label": "Subscription Option Label",
+      "default": "Subscribe & Save"
+    },
+    {
+      "type": "text",
+      "id": "sub_discount_badge",
+      "label": "Discount Badge Text",
+      "default": "Save 10%"
+    },
+    {
+      "type": "header",
+      "content": "Theme Colors"
+    },
+    {
+      "type": "color",
+      "id": "btn_color",
+      "label": "Add to Cart Button Color",
+      "default": "#000000"
     }
   ]
 }

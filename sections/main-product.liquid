@@ -76,8 +76,102 @@
   <div class="page-width">
     <div class="product product--{{ section.settings.media_size }} product--{{ section.settings.media_position }} product--{{ section.settings.gallery_layout }} product--mobile-{{ section.settings.mobile_thumbnails }} grid grid--1-col {% if product.media.size > 0 %}grid--2-col-tablet{% else %}product--no-media{% endif %}">
       <div class="grid__item product__media-wrapper">
-        {% render 'product-media-gallery', variant_images: variant_images %}
+        <div class="vb-gallery-layout">
+          <div class="vb-thumbnails-column">
+            {% for media in product.media %}
+              <button
+                class="vb-thumb-btn {% if media.id == product.featured_media.id %}active{% endif %}"
+                data-media-id="{{ media.id }}"
+                onclick="changeMainImage('{{ media.preview_image | image_url: width: 1000 }}', this)"
+              >
+                <img
+                  src="{{ media.preview_image | image_url: width: 150, height: 150 }}"
+                  width="150"
+                  height="150"
+                  loading="lazy"
+                  alt="{{ media.alt | escape }}"
+                >
+              </button>
+            {% endfor %}
+          </div>
+          <div class="vb-main-image-container">
+            <img
+              id="ProductImage"
+              src="{{ product.featured_media | image_url: width: 1000 }}"
+              alt="{{ product.title | escape }}"
+              class="vb-main-image"
+              width="1000"
+              height="1000"
+            >
+          </div>
+        </div>
       </div>
+
+      {%- style -%}
+        .vb-gallery-layout {
+          display: flex;
+          gap: 20px;
+          align-items: flex-start;
+        }
+        .vb-thumbnails-column {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          width: 80px;
+          flex-shrink: 0;
+        }
+        .vb-thumb-btn {
+          border: 1px solid #ddd;
+          background: #fff;
+          padding: 0;
+          cursor: pointer;
+          border-radius: 4px;
+          overflow: hidden;
+          transition: 0.2s;
+        }
+        .vb-thumb-btn.active {
+          border-color: #111;
+          box-shadow: 0 0 0 1px #111;
+        }
+        .vb-thumb-btn img {
+          width: 100%;
+          height: auto;
+          display: block;
+          filter: grayscale(20%);
+        }
+        .vb-thumb-btn.active img {
+          filter: grayscale(0);
+        }
+        .vb-main-image-container {
+          flex: 1;
+          border: 1px solid #f0f0f0;
+          border-radius: 8px;
+          overflow: hidden;
+          background: #f9f9f9;
+        }
+        .vb-main-image {
+          width: 100%;
+          height: auto;
+          display: block;
+          object-fit: contain;
+        }
+
+        @media screen and (max-width: 749px) {
+          .vb-gallery-layout {
+            flex-direction: column-reverse;
+          }
+          .vb-thumbnails-column {
+            flex-direction: row;
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 5px;
+          }
+          .vb-thumb-btn {
+            width: 70px;
+            flex-shrink: 0;
+          }
+        }
+      {%- endstyle -%}
       <div class="product__info-wrapper grid__item{% if settings.page_width > 1400 and section.settings.media_size == "small" %} product__info-wrapper--extra-padding{% endif %}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}">
         <section
           id="ProductInfo-{{ section.id }}"
@@ -737,6 +831,32 @@
     </script>
   </div>
 </product-info>
+
+<script>
+  function changeMainImage(newSrc, clickedBtn) {
+    const mainImg = document.getElementById('ProductImage');
+    if (mainImg) mainImg.src = newSrc;
+    document.querySelectorAll('.vb-thumb-btn').forEach((btn) => btn.classList.remove('active'));
+    if (clickedBtn) clickedBtn.classList.add('active');
+  }
+
+  // Sync variant logic with images
+  document.addEventListener('DOMContentLoaded', () => {
+    const picker = document.querySelector('variant-selects, variant-radios');
+    if (picker) {
+      picker.addEventListener('change', () => {
+        setTimeout(() => {
+          const selectedMediaId = document.querySelector('[data-selected-variant-media-id]')?.dataset
+            .selectedVariantMediaId;
+          if (selectedMediaId) {
+            const thumb = document.querySelector(`.vb-thumb-btn[data-media-id="${selectedMediaId}"]`);
+            if (thumb) thumb.click();
+          }
+        }, 100);
+      });
+    }
+  });
+</script>
 
 {% schema %}
 {

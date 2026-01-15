@@ -4,16 +4,51 @@
       "type": "main-vitalblend-product",
       "settings": {}
     },
+    "faq": {
+      "type": "vitalblend-faq",
+      "blocks": {
+        "faq-0": {
+          "type": "faq",
+          "settings": {
+            "question": "Is VitalBlend suitable for everyday use?",
+            "answer": "<p>Yes! Our products are designed to be part of your daily wellness routine. We recommend 1-2 servings per day for optimal results.<\/p>"
+          }
+        },
+        "faq-1": {
+          "type": "faq",
+          "settings": {
+            "question": "How should I store the Protein Enhancer?",
+            "answer": "<p>Keep it in a cool, dry place away from direct sunlight. No refrigeration is needed, but ensure the lid is tightly sealed after each use.<\/p>"
+          }
+        },
+        "faq-2": {
+          "type": "faq",
+          "settings": {
+            "question": "Can I cancel my subscription anytime?",
+            "answer": "<p>Absolutely. You have full control over your subscription through your account dashboard. No commitments, skip or cancel whenever you want.<\/p>"
+          }
+        }
+      },
+      "block_order": [
+        "faq-0",
+        "faq-1",
+        "faq-2"
+      ],
+      "settings": {
+        "title": "VitalBlend - Frequently Asked Questions"
+      }
+    },
     "recommendations": {
       "type": "vitalblend-recommendations",
       "settings": {
         "heading": "Boost Your Routine",
-        "collection_source": "all" 
+        "collection_source": "all"
       }
     }
   },
   "order": [
     "main",
+    "faq",
     "recommendations"
   ]
 }
