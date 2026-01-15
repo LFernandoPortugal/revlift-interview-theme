@@ -1,0 +1,154 @@
+{%- style -%}
+  .vb-hero-{{ section.id }} {
+    position: relative;
+    width: 100%;
+    height: 80vh;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: #000;
+  }
+  .vb-hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.85;
+  }
+  .vb-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%);
+    z-index: 1;
+  }
+  .vb-hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: #fff;
+    max-width: 800px;
+    padding: 20px;
+    animation: fadeInUp 1s ease-out;
+  }
+  .vb-hero-title {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin: 0 0 20px;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+  }
+  .vb-hero-subtitle {
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    margin: 0 0 40px;
+    opacity: 0.95;
+    font-weight: 400;
+  }
+  .vb-hero-btn {
+    display: inline-block;
+    padding: 18px 45px;
+    background-color: #E53935;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 1.1rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .vb-hero-btn:hover {
+    background-color: #c62828;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .vb-hero-{{ section.id }} { height: 70vh; }
+  }
+{%- endstyle -%}
+
+<section class="vb-hero-{{ section.id }}">
+  {%- if section.settings.image != blank -%}
+    {{ section.settings.image | image_url: width: 2000 | image_tag: class: 'vb-hero-bg', loading: 'eager' }}
+  {%- else -%}
+    <img
+      src="{{ 'vitalblend-hero-bg.png' | asset_url }}"
+      class="vb-hero-bg"
+      loading="eager"
+      alt="VitalBlend Hero"
+      width="2000"
+      height="1200"
+    >
+  {%- endif -%}
+
+  <div class="vb-hero-overlay"></div>
+
+  <div class="vb-hero-content">
+    <h1 class="vb-hero-title">{{ section.settings.title }}</h1>
+    <p class="vb-hero-subtitle">{{ section.settings.subtitle }}</p>
+    {% if section.settings.button_label != blank %}
+      <a href="{{ section.settings.button_link }}" class="vb-hero-btn">{{ section.settings.button_label }}</a>
+    {% endif %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "VitalBlend Hero",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Hero Image (Overrides Default Asset)"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Main Title",
+      "default": "Fuel Your Vitality"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Sub-heading",
+      "default": "Clean, powerful protein and supplements designed for your peak performance."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button Label",
+      "default": "Shop All Products"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button Link",
+      "default": "/collections/all"
+    }
+  ],
+  "presets": [
+    {
+      "name": "VitalBlend Hero"
+    }
+  ]
+}
+{% endschema %}
