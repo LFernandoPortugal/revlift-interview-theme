@@ -90,6 +90,12 @@
             </div>
           </fieldset>
         {% endfor %}
+
+        <!-- DYNAMIC VARIANT HIGHLIGHT -->
+        <div id="VariantHighlight" class="vb-variant-highlight" style="display: none;">
+          <span class="vb-highlight-icon">✨</span>
+          <span id="VariantHighlightText"></span>
+        </div>
       </div>
 
       <div class="vb-purchase-type-container">
@@ -154,21 +160,23 @@
 
         <div id="Nutrition" class="vb-tab-content">
           <div class="vb-description-inner">
-            {% if product.metafields.custom.nutrition_facts != blank %}
-              {{ product.metafields.custom.nutrition_facts }}
-            {% else %}
-              <p>High-quality protein sourced directly from trusted farmers. No artificial fillers or preservatives.</p>
-            {% endif %}
+            <strong>Fuel for Peak Performance</strong>
+            <p>VitalBlend uses 100% human-grade, bioavailable protein sources. No fillers, just fuel.</p>
+            <ul>
+              <li>High protein density (25g per serving)</li>
+              <li>Natural Electrolytes for hydration</li>
+              <li>Zero added sugar or artificial colors</li>
+            </ul>
           </div>
         </div>
 
         <div id="Feeding" class="vb-tab-content">
           <div class="vb-description-inner">
-            {% if product.metafields.custom.feeding_guide != blank %}
-              {{ product.metafields.custom.feeding_guide }}
-            {% else %}
-              <p>Serve as a treat or topper. Always provide fresh water for your pet.</p>
-            {% endif %}
+            <strong>Usage Instructions</strong>
+            <p>Mix 1 scoop with 8-10oz of cold water or your favorite nut milk. Shake well for 20 seconds.</p>
+            <p>
+              <em>Pro Tip: Use after workouts or as a morning protein boost to sustain energy throughout the day.</em>
+            </p>
           </div>
         </div>
       </div>
@@ -310,31 +318,31 @@
 
   <!-- INGREDIENTS VISUAL BREAKDOWN -->
   <div class="vb-section-block vb-ingredients-visual">
-    <h3>What's Inside</h3>
+    <h3>Supercharged Ingredients</h3>
     <div class="vb-ingredients-grid">
       <div class="vb-ingredient-card">
         <div class="vb-ingredient-image-wrapper">
           <img
             src="{{ 'raw-chicken-breast.png' | asset_url }}"
-            alt="Fresh Chicken"
+            alt="Whey Isolate"
             loading="lazy"
             width="400"
             height="400"
           >
         </div>
         <div class="vb-ingredient-info">
-          <h4>Fresh Chicken</h4>
-          <p>High-quality, lean protein to support muscle growth and energy.</p>
+          <h4>Premium Whey Isolate</h4>
+          <p>Ultra-filtered protein for maximum absorption and rapid muscle recovery.</p>
         </div>
       </div>
 
       <div class="vb-ingredient-card">
         <div class="vb-ingredient-image-wrapper">
-          <img src="{{ 'sweet-potato.png' | asset_url }}" alt="Sweet Potato" loading="lazy" width="400" height="400">
+          <img src="{{ 'sweet-potato.png' | asset_url }}" alt="Organic Matcha" loading="lazy" width="400" height="400">
         </div>
         <div class="vb-ingredient-info">
-          <h4>Sweet Potato</h4>
-          <p>Rich in fiber and vitamins for healthy digestion and immune support.</p>
+          <h4>Organic Ceremonial Matcha</h4>
+          <p>L-Theanine rich energy for sustained focus without the caffeine crash.</p>
         </div>
       </div>
 
@@ -342,15 +350,15 @@
         <div class="vb-ingredient-image-wrapper">
           <img
             src="{{ 'rosemary-oil.png' | asset_url }}"
-            alt="Rosemary Extract"
+            alt="Ashwagandha"
             loading="lazy"
             width="400"
             height="400"
           >
         </div>
         <div class="vb-ingredient-info">
-          <h4>Rosemary Extract</h4>
-          <p>A natural antioxidant to keep our treats fresh and tasty.</p>
+          <h4>Ashwagandha Root</h4>
+          <p>Ancient adaptogen to help your body manage stress and optimize performance.</p>
         </div>
       </div>
     </div>
@@ -498,6 +506,22 @@
   .vb-pill input:checked + span { border-color: #000; background: #000; color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
   .vb-option-label { font-weight: bold; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
   .vb-option-group { margin-bottom: 1.5rem; border: none; padding: 0; }
+
+  .vb-variant-highlight {
+    background: #fdf2f2;
+    border-left: 3px solid #E53935;
+    padding: 10px 15px;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    color: #111;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  .vb-highlight-icon { font-size: 1.1rem; }
 
   /* --- SUBSCRIPTION WIDGET --- */
   .vb-purchase-type-container { margin: 2rem 0; border: 1px solid #ddd; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
@@ -736,6 +760,31 @@
 
       // E. Refresh displayed prices
       updatePriceDisplay();
+
+      // F. Update Dynamic Variant Highlights
+      const highlightBox = document.getElementById('VariantHighlight');
+      const highlightText = document.getElementById('VariantHighlightText');
+      if (highlightBox && highlightText) {
+        const vTitle = matchedVariant.title.toLowerCase();
+        let benefit = "";
+        
+        if (vTitle.includes('vanilla') || vTitle.includes('vainilla')) {
+          benefit = "Smooth & Creamy. Perfect for everyday shakes and baking.";
+        } else if (vTitle.includes('cocoa') || vTitle.includes('chocolate')) {
+          benefit = "Rich & Indulgent. The ultimate post-workout recovery flavor.";
+        } else if (vTitle.includes('berry') || vTitle.includes('frutos')) {
+          benefit = "Refreshing & Crisp. High antioxidant boost for your active days.";
+        } else if (vTitle.includes('60') || vTitle.includes('90')) {
+          benefit = "Optimized Supply. Consistent performance at the best value.";
+        }
+        
+        if (benefit) {
+          highlightText.innerText = benefit;
+          highlightBox.style.display = 'flex';
+        } else {
+          highlightBox.style.display = 'none';
+        }
+      }
     }
   }
 
